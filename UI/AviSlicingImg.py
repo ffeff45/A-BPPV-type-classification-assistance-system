@@ -133,17 +133,27 @@ class AviSlicingImg():
                 frame_rt = frame_col[:, :161]
                 frame_r = cv2.resize(frame_rt, (320, 240))
 
-                r_image_name = f"{n}_{V_name}_R_{num}"
+                str_R = np.array2string(frame_r)
+
+                R_image_name = f"{n}_{V_name}_R_{num}"
+                
+                sql_R = f"INSERT INTO Images (imageid, imagenparray) VALUE ('{R_image_name}','{str_R}');"                 
+                AviSlicingImg.DB_Insert(sql_R)
                 
                 frame_lt = frame_col[:, 161:]
                 frame_l = cv2.resize(frame_lt, (320, 240))
 
+                str_L = np.array2string(frame_l)
+
                 L_image_name = f"{n}_{V_name}_L_{num}"
+
+                sql_L = f"INSERT INTO Images (imageid, imagenparray) VALUE ('{L_image_name}','{str_L}');"                
+                AviSlicingImg.DB_Insert(sql_L)
 
                 frame_r_array.append(AviSlicingImg.CutImage(frame_r))
                 frame_l_array.append(AviSlicingImg.CutImage(frame_l))
 
-                
+              
 
             else:
                 print("NOpe")
@@ -155,9 +165,9 @@ class AviSlicingImg():
         # np.save("frame_lt",self.img_lt_np_array) #DB 넘어가는 코드 작성되면 사라져용 확인용
         
         video.release()
-        img_l = AviSlicingImg.PredictUNet(self.img_lt_np_array)
-        for i in range(len(img_l)):
-            bppv_img = img_l[i]
-            list = AviSlicingImg.preprocessing(bppv_img)
-            elii = AviSlicingImg.Ellipse(list)
-            print(elii)
+        # img_l = AviSlicingImg.PredictUNet(self.img_lt_np_array)
+        # for i in range(len(img_l)):
+        #     bppv_img = img_l[i]
+        #     list = AviSlicingImg.preprocessing(bppv_img)
+        #     elii = AviSlicingImg.Ellipse(list)
+        #     print(elii)

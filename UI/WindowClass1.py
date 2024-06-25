@@ -256,16 +256,6 @@ class WindowClass1(QMainWindow, UI_class):
 
     #저장버튼
     def saveToDatabase(self):
-
-        # for row in range(self.Sc1_ListView.rowCount()):
-        #     path = self.Sc1_ListView.item(row, 6).text()
-        #     AviSlicingImg.img_slice_save(self, path)
-
-        # self.video_name.setText("")  
-        # self.mp = CMultiMedia(self, self.Sc1_Video)
-        # self.Sc1_TimeText.setText('')
-        # self.Sc1_ListView.setRowCount(0)  
-        
         ssh_host = '210.126.67.40'
         ssh_port = 7785
         ssh_username = 'qhdrmfdl1234'
@@ -313,14 +303,16 @@ class WindowClass1(QMainWindow, UI_class):
                 cursor.execute(sql, (filename, length_time, fps, width, height, date,frame))
             
             conn.commit()
-
-
-            self.video_name.setText("")  
-            self.mp = CMultiMedia(self, self.Sc1_Video)
-            self.Sc1_TimeText.setText('')
-            self.Sc1_ListView.setRowCount(0)  
             conn.close()
-        
+
+        for row in range(self.Sc1_ListView.rowCount()):
+            path = self.Sc1_ListView.item(row, 6).text()
+            AviSlicingImg.img_slice_save(self, path, date)
+
+        self.video_name.setText("")  
+        self.mp = CMultiMedia(self, self.Sc1_Video)
+        self.Sc1_TimeText.setText('')
+        self.Sc1_ListView.setRowCount(0)  
         
         # 저장 완료 메시지 박스
         msg = QMessageBox()
