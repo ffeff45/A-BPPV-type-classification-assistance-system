@@ -1,4 +1,6 @@
 import sys
+import os
+import getpass
 import pymysql
 import pandas as pd
 from sshtunnel import SSHTunnelForwarder
@@ -8,6 +10,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl, Qt, QThread, pyqtSignal
 import resource2_rc
+from ND_Algorithm import ND
 
 # UI파일 연결 코드
 UI_class = uic.loadUiType("ND_Result.ui")[0]
@@ -15,6 +18,9 @@ UI_class = uic.loadUiType("ND_Result.ui")[0]
 class DatabaseThread(QThread):
     data_loaded = pyqtSignal(pd.DataFrame)
     error_occurred = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super(DatabaseThread, self).__init__(parent)
 
     def run(self):
         try:
@@ -46,7 +52,7 @@ class DatabaseThread(QThread):
                 )
 
                 cursor = conn.cursor(pymysql.cursors.DictCursor)
-                sql = "SELECT Videos.videoname, Videos.videodate, kernellesions.kernellesion FROM Videos JOIN kernellesions ON Videos.videoid = kernellesions.videoid;"
+                sql = "SELECT Videos.videoid, Videos.videoname, Videos.videodate, kernellesions.kernellesion FROM Videos JOIN kernellesions ON Videos.videoid = kernellesions.videoid;"
                 cursor.execute(sql)
                 result = cursor.fetchall()
                 conn.close()
@@ -58,6 +64,7 @@ class DatabaseThread(QThread):
 
 
 class WindowResult(QDialog, QWidget, UI_class):
+
     def __init__(self):
         super(WindowResult, self).__init__()
         self.setupUi(self)
@@ -69,19 +76,18 @@ class WindowResult(QDialog, QWidget, UI_class):
         self.Sc2_Pause.clicked.connect(self.clickPause)
         self.Sc2_ListView.itemDoubleClicked.connect(self.listDoubleClicked)
 
-        qPixmapVar1 = QPixmap()
-        qPixmapVar1.load("C:/Users/hyejin/ND/Result/graR.png")
-        self.Sc2_imgRx.setPixmap(qPixmapVar1)
-
-        qPixmapVar2 = QPixmap()
-        qPixmapVar2.load("C:/Users/hyejin/ND/Result/graL.png")
-        self.Sc2_imgLx.setPixmap(qPixmapVar2)
-
         self.Sc2_Home.clicked.connect(self.goToFirstWindow)
         self.Sc2_ListView.setColumnCount(3)
-        self.Sc2_ListView.setHorizontalHeaderLabels(['FileName', 'Date', 'Canal'])
+        self.Sc2_ListView.setHorizontalHeaderLabels(['FileName', 'Date','bppvlesion'])
         self.Sc2_ListView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.Sc2_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.imagelabels = [
+            self.Sc2_imgRx,
+            self.Sc2_imgRy,
+            self.Sc2_imgLx,
+            self.Sc2_imgLy,
+        ]
 
         self.mediaPlayers = [
             QMediaPlayer(None, QMediaPlayer.VideoSurface),
@@ -95,6 +101,7 @@ class WindowResult(QDialog, QWidget, UI_class):
         self.mediaPlayers[2].setVideoOutput(self.Sc2_DotR)
         self.mediaPlayers[3].setVideoOutput(self.Sc2_DotL)
 
+
         self.show()
 
         self.database_thread = DatabaseThread()
@@ -102,54 +109,104 @@ class WindowResult(QDialog, QWidget, UI_class):
         self.database_thread.error_occurred.connect(self.handle_database_error)
         self.database_thread.start()
 
-        self.video_paths = [
-            "C:/Users/hyejin/ND/Original/0005_안진안진안진/Eye_R.mp4",
-            "C:/Users/hyejin/ND/Original/0005_안진안진안진/Eye_L.mp4",
-            "C:/Users/hyejin/ND/Result/R_video.mp4",
-            "C:/Users/hyejin/ND/Result/L_video.mp4"
-        ]
+    def folder(self, filename):        
+        filename = filename[:-4]
+
+        username = getpass.getuser()
+        user_path = os.path.join("C:\\Users", username)
+
+        ND_path = os.path.join(user_path, 'ND')
+
+        Original_path = os.path.join(ND_path, 'Original', filename)
+        Result_path = os.path.join(ND_path, 'Result', filename)
+
+        r_o_path = os.path.join(Original_path, 'Eye_R.mp4')
+        l_o_path = os.path.join(Original_path, 'Eye_L.mp4')
+        r_res_path = os.path.join(Result_path, 'Eye_R.mp4')
+        l_res_path = os.path.join(Result_path, 'Eye_L.mp4')
+
+        r_x_path = os.path.join(Result_path, f"{filename}.mp4_R_X.png")
+        r_y_path = os.path.join(Result_path, f"{filename}.mp4_R_Y.png")
+        l_x_path = os.path.join(Result_path, f"{filename}.mp4_L_X.png")
+        l_y_path = os.path.join(Result_path, f"{filename}.mp4_L_Y.png")
+
+        if not os.path.exists(ND_path):
+            os.makedirs(ND_path)
+
+        if not os.path.exists(Original_path):
+            os.makedirs(Original_path)
+        
+        if not os.path.exists(Result_path):
+            os.makedirs(Result_path)
+
+        print(r_x_path,r_y_path, l_x_path,l_y_path)
+
+        return r_o_path, l_o_path, r_res_path, l_res_path, Result_path, r_x_path,r_y_path, l_x_path,l_y_path
 
     def goToFirstWindow(self):
         self.close()
 
     def clickPlay(self):
-        for player in self.mediaPlayers:
-            player.play()
+        current_index = self.Sc2_ListView.currentRow()
+        if current_index == -1:  # 선택된 항목이 없는 경우
+            current_index = 0  # 기본적으로 첫 번째 항목을 선택
+        self.playMediaAndDisplayImages(current_index)
 
     def clickPause(self):
         for player in self.mediaPlayers:
             player.pause()
 
-    def playMedia(self, index):
+    def playMediaAndDisplayImages(self, index):
+        filename = self.Sc2_ListView.item(index, 0).text()
+        canal = self.Sc2_ListView.item(index, 2).text()       
+
+        self.Sc2_ResultView.setText(f"{canal}로 의심됩니다.")
+        
+        r_o_path, l_o_path, r_res_path, l_res_path, _, r_x_path,r_y_path, l_x_path,l_y_path = self.folder(filename)
+        video_paths = [r_o_path, l_o_path, r_res_path, l_res_path]
+        
+        qPixmapVar1 = QPixmap()
+        qPixmapVar2 = QPixmap()
+        qPixmapVar3 = QPixmap()
+        qPixmapVar4 = QPixmap()
+
+        qPixmapVar1.load(r_x_path)
+        qPixmapVar2.load(r_y_path)
+        qPixmapVar3.load(l_x_path)
+        qPixmapVar4.load(l_y_path)
+
+        self.Sc2_imgRx.setPixmap(qPixmapVar1)
+        self.Sc2_imgRy.setPixmap(qPixmapVar2)
+        self.Sc2_imgLx.setPixmap(qPixmapVar3)
+        self.Sc2_imgLy.setPixmap(qPixmapVar4)
+
         for i, player in enumerate(self.mediaPlayers):
-            player.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_paths[i])))
+            player.setMedia(QMediaContent(QUrl.fromLocalFile(video_paths[i])))
             player.play()
 
     def listDoubleClicked(self):
         current_index = self.Sc2_ListView.currentRow()
-        self.playMedia(current_index)
-
-    def pushDeldClicked(self):
-        current_row = self.Sc2_ListView.currentRow()
-        if current_row >= 0:  # 선택된 항목이 있는 경우
-            self.Sc2_ListView.removeRow(current_row)
-            # 이 부분에서 적절한 미디어 삭제 로직을 추가해야 합니다.
+        self.playMediaAndDisplayImages(current_index)
 
     def populate_table(self, df):
         for i in range(len(df)):
             row_1 = df.iloc[i]
-            filename = row_1["videoname"]
+            videoid = row_1["videoid"]
+            v_id = str(videoid).zfill(4)
+            filename = f'{v_id}_{row_1["videoname"]}'
             date = str(row_1["videodate"])
             canal = str(row_1["kernellesion"])
+            
             row = self.Sc2_ListView.rowCount()
             self.Sc2_ListView.setRowCount(row + 1)
+            
             self.Sc2_ListView.setItem(row, 0, QTableWidgetItem(filename))
-            self.Sc2_ListView.setItem(row, 1, QTableWidgetItem(date))
-            self.Sc2_ListView.setItem(row, 2, QTableWidgetItem(canal))
+            self.Sc2_ListView.setItem(row, 1, QTableWidgetItem(date)) 
+            self.Sc2_ListView.setItem(row, 2, QTableWidgetItem(canal))          
+
 
     def handle_database_error(self, error_message):
         QMessageBox.critical(self, "Database Error", error_message)
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

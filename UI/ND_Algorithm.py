@@ -15,8 +15,6 @@ from contextlib import contextmanager
 import datetime
 import matplotlib.dates as mdates
 
-
-
 class ND():
 
     def __init__(self):
@@ -271,7 +269,7 @@ class ND():
             t_d.append(stime)
         return t_d
     
-    def plot_point(data_r, data_l, res_id, path, progress_callback=None): 
+    def plot_point(data_r, data_l, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l, res_id, path, progress_callback=None): 
         print(1)
         fig1 = plt.figure()
         fig2 = plt.figure()
@@ -290,7 +288,6 @@ class ND():
         ax1.xaxis.set_major_locator(mdates.SecondLocator(interval=2))
         ax1.xaxis.set_major_formatter(formatter) 
 
-
         ax2.set_ylim(0,240)
         ax2.set_ylabel(ylabel = 'Y_point')
         ax2.set_xlabel(xlabel = 'time(s)')
@@ -303,15 +300,12 @@ class ND():
         ax3.xaxis.set_major_locator(mdates.SecondLocator(interval=2))
         ax3.xaxis.set_major_formatter(formatter) 
 
-
         ax4.set_ylim(0,240)
         ax4.set_ylabel(ylabel = 'Y_point')
         ax4.set_xlabel(xlabel = 'time(s)')
         ax4.xaxis.set_major_locator(mdates.SecondLocator(interval=2))
-        ax4.xaxis.set_major_formatter(formatter)       
-
+        ax4.xaxis.set_major_formatter(formatter)      
         
-        _, data_l, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l = ND.Nystagmus(data_r, data_l)
         print(3)
 
         ax1.plot('time', 'x', data = data_r, c = "g", label = 'Eye_R')
@@ -341,15 +335,15 @@ class ND():
         ax3.legend()
         ax4.legend()
 
-        img_path1 = os.path.join(path, f"eyetrace_{res_id}_R_X.png")
-        img_path2 = os.path.join(path, f"eyetrace_{res_id}_R_Y.png")
-        img_path3 = os.path.join(path, f"eyetrace_{res_id}_L_X.png")
-        img_path4 = os.path.join(path, f"eyetrace_{res_id}_L_Y.png")
+        img_path1 = os.path.join(path, f"{res_id}_R_X.png")
+        img_path2 = os.path.join(path, f"{res_id}_R_Y.png")
+        img_path3 = os.path.join(path, f"{res_id}_L_X.png")
+        img_path4 = os.path.join(path, f"{res_id}_L_Y.png")
         print(4)
-        fig1.savefig(img_path1)
-        fig2.savefig(img_path2)
-        fig3.savefig(img_path3)
-        fig4.savefig(img_path4)
+        fig1.savefig(img_path1, dpi = 50, transparent = True)
+        fig2.savefig(img_path2, dpi = 50, transparent = True)
+        fig3.savefig(img_path3, dpi = 50, transparent = True)
+        fig4.savefig(img_path4, dpi = 50, transparent = True)
 
         for i in range(10):
             if progress_callback:
@@ -381,12 +375,10 @@ class ND():
                 progress_callback(progress_percent)
 
     def Nystagmus(data_r, data_l):
-            a_r, x_r, a1_r, y1_r=[]            
-            a_l, x_l, a1_l, y1_l=[]
-
+                                 
             #Eye R
-            x_avg_r = np.average(data_r['x'])
-            y_avg_r = np.average(data_r['y'])
+            x_avg_r = data_r['x'].mean()
+            y_avg_r = data_r['y'].mean()
 
             data_r['avg_x'] = x_avg_r
             data_r['avg_y'] = y_avg_r
@@ -396,37 +388,42 @@ class ND():
             moving_average_x_r = moving_std_x_r.mean()
             moving_average_y_r = moving_std_y_r.mean()
 
-            d_x_r = np.max(moving_std_x_r)
+            d_x_r = moving_std_x_r.max()
             n_x_r= (d_x_r)/(d_x_r-moving_average_x_r)
 
-            d_y_r = np.max(moving_std_y_r)
+            d_y_r = moving_std_y_r.max()
             n_y_r= (d_y_r)/(d_y_r-moving_average_y_r)
 
             data_r['movstd_x'] = moving_std_x_r
             data_r['movstd_y'] = moving_std_y_r
-            print(data_r)
-            ND_x_r =pd.DataFrame(columns = {'x','time'})
 
-            for i in range(len(moving_std_x_r)):
+            a_r=[]
+            x_r=[]
+            a1_r=[]
+            y1_r=[]
+            
+            ND_x_r =pd.DataFrame(columns = ['x','time'])
+
+            for i in range(len(data_r)):
                 if n_x_r<data_r['movstd_x'][i] <= d_x_r :     
                     x_r.append(data_r['x'][i])
                     a_r.append(data_r['time'][i])
             ND_x_r['x'] = x_r
             ND_x_r['time'] = a_r
 
-            ND_y_r =pd.DataFrame(columns = {'y','time'})
+            ND_y_r =pd.DataFrame(columns = ['y','time'])
 
-            for i in range(len(moving_std_y_r)):
+            for i in range(len(data_r)):
                 if n_y_r<data_r['movstd_y'][i] <= d_y_r :     
                     y1_r.append(data_r['y'][i])
                     a1_r.append(data_r['time'][i])
 
             ND_y_r['y'] = y1_r
             ND_y_r['time'] = a1_r
-
-            #Eye L
-            x_avg_l = np.average(data_l['x'])
-            y_avg_l = np.average(data_l['y'])
+           
+           #Eye L
+            x_avg_l = data_l['x'].mean()
+            y_avg_l = data_l['y'].mean()
             
             data_l['avg_x'] = x_avg_l
             data_l['avg_y'] = y_avg_l
@@ -435,27 +432,33 @@ class ND():
             moving_std_y_l = data_l['y'].rolling(window=2).std()
             moving_average_x_l = moving_std_x_l.mean()
             moving_average_y_l = moving_std_y_l.mean()
-            
-            d_x_l = np.max(moving_std_x_l)
+           
+            d_x_l = moving_std_x_l.max()
             n_x_l= (d_x_l)/((d_x_l)-moving_average_x_l)
             
-            d_y_l = np.max(moving_std_y_l)
+            d_y_l = moving_std_y_l.max()
             n_y_l= (d_y_l)/(d_y_l-moving_average_y_l)
 
             data_l['movstd_x'] = moving_std_x_l
             data_l['movstd_y'] = moving_std_y_l
-            ND_x_l =pd.DataFrame(columns = {'x','time'})
 
-            for i in range(len(moving_std_x_l)):
+            a_l=[]
+            x_l=[]
+            a1_l=[]
+            y1_l=[]
+
+            ND_x_l =pd.DataFrame(columns = ['x','time'])
+
+            for i in range(len(data_l)):
                 if n_x_l<data_l['movstd_x'][i] <= d_x_l :     
                     x_l.append(data_l['x'][i])
                     a_l.append(data_l['time'][i])
             ND_x_l['x'] = x_l
             ND_x_l['time'] = a_l
 
-            ND_y_l =pd.DataFrame(columns = {'y','time'})
+            ND_y_l =pd.DataFrame(columns = ['y','time'])
 
-            for i in range(len(moving_std_y_l)):
+            for i in range(len(data_l)):
                 if n_y_l<data_l['movstd_y'][i] <= d_y_l :     
                     y1_l.append(data_l['y'][i])
                     a1_l.append(data_l['time'][i])
@@ -469,36 +472,31 @@ class ND():
             df_ND_x_l = pd.merge(ND_x_l,data_l, how='inner')
             df_ND_y_l = pd.merge(ND_y_l,data_l, how='inner')
 
-            print(data_r, data_l, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l)
-
             return data_r, data_l, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l
     
-    def ND_kernel(data_r, data_l,progress_callback = None):
-
-        df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l = ND.Nystagmus(data_r, data_l)
+    def ND_kernel(df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l ,progress_callback = None):
 
         std_avg_x_r = df_ND_x_r['movstd_x'].mean()
         std_avg_y_r = df_ND_y_r['movstd_y'].mean()
 
         if std_avg_x_r > std_avg_y_r :
-            res_r = 'HC-BPPV'
+            res_r = '수평반고리관 [HC-BPPV]'
             if std_avg_y_r >= (std_avg_x_r - 1):
-                res_r = 'PC-BPPV'
+                res_r = '후반고리관 [PC-BPPV]'
         elif std_avg_x_r < std_avg_y_r :
             if std_avg_x_r >= (std_avg_y_r - 1):
-                res_r = 'PC-BPPV'
+                res_r = '후반고리관 [PC-BPPV]'
 
         std_avg_x_l = df_ND_x_l['movstd_x'].mean()
         std_avg_y_l = df_ND_y_l['movstd_y'].mean()
 
         if std_avg_x_l > std_avg_y_l :
-            res_l = 'HC-BPPV'
+            res_l = '수평반고리관 [HC-BPPV]'
             if std_avg_y_l >= (std_avg_x_l - 1):
-                res_l = 'PC-BPPV'
+                res_l = '후반고리관 [PC-BPPV]'
         elif std_avg_x_l < std_avg_y_l :
             if std_avg_x_l >= (std_avg_y_l - 1):
-                res_l = 'PC-BPPV'
-
+                res_l = '후반고리관 [PC-BPPV]'
 
         if res_r == res_l : 
             kernel = res_r
@@ -525,6 +523,7 @@ class ND():
 
             id_info_row = id_info.iloc[0]      
             v_id = str(id_info_row["videoid"]).zfill(4)
+            video_id = int(id_info_row["videoid"])
             res_id = v_id +"_"+ V_name
 
             r_o_path, l_o_path, r_res_path, l_res_path, Result_path = ND.folder(res_id)
@@ -549,9 +548,9 @@ class ND():
             df_R_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')
             df_L_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')   
 
-            # df_R_pupils, df_L_pupils,_,_,_,_ = ND.Nystagmus(df_R_pupils, df_L_pupils)
+            df_R_pupils, df_L_pupils, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l = ND.Nystagmus(df_R_pupils,df_L_pupils)
 
-            # ND.plot_point(df_R_pupils, df_L_pupils,res_id, Result_path, progress_callback)
+            ND.plot_point(df_R_pupils, df_L_pupils, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l, res_id, Result_path, progress_callback)
 
             new_size = (465,462)
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -560,7 +559,7 @@ class ND():
 
             res_img_path = os.path.join(Result_path,'img')
             
-            #---------------------------------------
+            #---------------------------------------산점도영상저장
             r_x_max = df_R_pupils["x"].max()
             r_x_min = df_R_pupils["x"].min()
             r_y_max = df_R_pupils["y"].max()
@@ -581,7 +580,6 @@ class ND():
             shutil.rmtree(os.path.join(Result_path,"img"))
 
             #---------------------------------------
-
             l_x_max = df_L_pupils["x"].max()
             l_x_min = df_L_pupils["x"].min()
             l_y_max = df_L_pupils["y"].max()
@@ -600,10 +598,11 @@ class ND():
 
             l_out_res.release()
             shutil.rmtree(os.path.join(Result_path,"img"))
+            #---------------------------------------
 
-            # kernel = ND.ND_kernel(df_R_pupils, df_L_pupils, progress_callback)
+            kernel = ND.ND_kernel(df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l, progress_callback)
 
-            # sql_kenel = "INSERT INTO kernellesions (videoid, kernellesion) VALUES (%s, %s);"
-            # ND.DB_Insert(tunnel, sql_kenel( id_info_row["videoid"], kernel))
+            sql_kenel = "INSERT INTO kernellesions (videoid, kernellesion) VALUES (%s,%s);"
+            ND.DB_Insert(tunnel, sql_kenel,(video_id,kernel))   
 
             cv2.destroyAllWindows()
