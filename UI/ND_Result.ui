@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1271</width>
-    <height>1071</height>
+    <width>1250</width>
+    <height>1000</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>1271</width>
+    <width>1250</width>
     <height>0</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1271</width>
+    <width>1250</width>
     <height>16777215</height>
    </size>
   </property>
@@ -46,13 +46,13 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>1050</height>
+       <height>1000</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>1260</width>
-       <height>1050</height>
+       <height>1000</height>
       </size>
      </property>
      <property name="frameShape">
@@ -82,13 +82,13 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>650</height>
+          <height>600</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>1240</width>
-          <height>700</height>
+          <height>600</height>
          </size>
         </property>
         <property name="frameShape">
@@ -515,7 +515,7 @@ QPushButton:pressed {
         </layout>
        </widget>
       </item>
-      <item alignment="Qt::AlignHCenter">
+      <item>
        <widget class="QLabel" name="label_5">
         <property name="minimumSize">
          <size>
@@ -541,7 +541,7 @@ QPushButton:pressed {
          <string notr="true">color: rgb(12, 159, 161);</string>
         </property>
         <property name="text">
-         <string>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</string>
+         <string>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</string>
         </property>
        </widget>
       </item>
@@ -571,13 +571,13 @@ QPushButton:pressed {
            <property name="minimumSize">
             <size>
              <width>450</width>
-             <height>300</height>
+             <height>280</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
              <width>450</width>
-             <height>300</height>
+             <height>280</height>
             </size>
            </property>
            <property name="font">
@@ -712,6 +712,9 @@ QPushButton:pressed {
              <width>400</width>
              <height>150</height>
             </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
            </property>
            <property name="text">
             <string/>
