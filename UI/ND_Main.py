@@ -78,18 +78,19 @@ class DatabaseThread(QThread):
                     
                     cursor.execute(sql, (filename, length, fps, width, height, date, frame))
 
-                    progress_percent = int(((index + 1) / total_items) * 100 * 0.2)  # 첫 50%를 비디오 처리에 할당
+                    progress_percent = int(((index + 1) / total_items) * 100 * 0.1)  # 첫 50%를 비디오 처리에 할당
                     self.progress.emit(progress_percent)
 
                 conn.commit()
                 conn.close()
 
                 def img_slice_progress_callback(progress):
-                    img_slice_progress_percent = 20 + int(progress * 0.8)
+                    img_slice_progress_percent = 10 + int(progress * 0.9)
                     self.progress.emit(img_slice_progress_percent) 
 
                 for item in self.list_view_items:
                     path = item['path']
+                    date = item['date']
                     ND.System(self, path, date,progress_callback=img_slice_progress_callback)
                     
         except Exception as e:

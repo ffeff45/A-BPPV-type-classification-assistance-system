@@ -184,6 +184,7 @@ class ND():
             cut_r_img_1 = cv2.cvtColor(cut_r, cv2.COLOR_GRAY2RGB)
             cut_l_img_1 = cv2.cvtColor(cut_l, cv2.COLOR_GRAY2RGB)
 
+
             if f == 0:
                 img_r_o = cv2.cvtColor(cut_r, cv2.COLOR_GRAY2RGB)
                 img_l_o = cv2.cvtColor(cut_l, cv2.COLOR_GRAY2RGB)
@@ -195,7 +196,7 @@ class ND():
             frame_l_array.append(l_img_array)
 
             if progress_callback:
-                progress_callback(20 * f / total_frames)
+                progress_callback(15 * f / total_frames)
 
         cap.release()
         out_r_o.release()
@@ -340,24 +341,24 @@ class ND():
         img_path3 = os.path.join(path, f"{res_id}_L_X.png")
         img_path4 = os.path.join(path, f"{res_id}_L_Y.png")
         print(4)
-        fig1.savefig(img_path1, dpi = 50, transparent = True)
-        fig2.savefig(img_path2, dpi = 50, transparent = True)
-        fig3.savefig(img_path3, dpi = 50, transparent = True)
-        fig4.savefig(img_path4, dpi = 50, transparent = True)
+        fig1.savefig(img_path1, dpi = 50)
+        fig2.savefig(img_path2, dpi = 50)
+        fig3.savefig(img_path3, dpi = 50)
+        fig4.savefig(img_path4, dpi = 50)
 
-        for i in range(10):
+        for i in range(20):
             if progress_callback:
-                progress_callback(60+i)
+                progress_callback(55+i)
     
-    def bppv_plot(x_max, x_min, y_max, y_min, df, path, label, i, progress_start, progress_end, progress_callback=None):
-
+    # def bppv_plot(x_max, x_min, y_max, y_min, df, path, label, i, progress_start, progress_end, progress_callback=None):
+    def bppv_plot(df, path, label, i, progress_start, progress_end, progress_callback=None):
         img_path = os.path.join(path,f"{i}.png")
 
         fig = plt.figure()
         fig, ax = plt.subplots(figsize=(6,6),sharex=True)
 
-        ax.set_xlim([x_min, x_max]) 
-        ax.set_ylim([y_min, y_max])
+        ax.set_xlim([0, 240]) 
+        ax.set_ylim([240, 0])
         
         ax.set_xlabel(xlabel = 'X_point')
         ax.set_ylabel(ylabel = 'Y_point')
@@ -505,9 +506,9 @@ class ND():
 
         print(kernel)
 
-        for i in range(10):
+        for i in range(5):
             if progress_callback:
-                progress_callback(90+i)
+                progress_callback(95+i)
         
         return kernel
     
@@ -533,8 +534,8 @@ class ND():
             pred_r, pred_l = ND.predict_and_preprocess(frame_r_array, frame_l_array)
 
             sql_insert_pupils = "INSERT INTO Pupils (imageid, x, y, max_distance, min_distance, slope) VALUES (%s, %s, %s, %s, %s, %s);"
-            ND.process_ellips(tunnel, sql_insert_pupils, pred_r, v_id, V_name, "R", 40, 50, progress_callback)
-            ND.process_ellips(tunnel, sql_insert_pupils, pred_l, v_id, V_name, "L", 50, 60, progress_callback)
+            ND.process_ellips(tunnel, sql_insert_pupils, pred_r, v_id, V_name, "R", 15, 35, progress_callback)
+            ND.process_ellips(tunnel, sql_insert_pupils, pred_l, v_id, V_name, "L", 35, 55, progress_callback)
 
 
             sql_R_pupils = f"SELECT x,y FROM Pupils WHERE imageid LIKE '{v_id}_{V_name}_R_%';"
@@ -548,6 +549,26 @@ class ND():
             df_R_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')
             df_L_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')   
 
+            #--------------------------------------- 결측치 처리
+
+            r_x = df_R_pupils['x']
+            r_y = df_R_pupils['y']
+            
+
+            df_R_pupils['x'] = np.ma.masked_where(r_x <= 0, r_x)
+            df_R_pupils['y'] = np.ma.masked_where(r_y <= 0, r_y)
+            
+
+            l_x = df_L_pupils['x']
+            l_y = df_L_pupils['y']
+            
+
+            df_L_pupils['x'] = np.ma.masked_where(l_x <= 0, l_x)
+            df_L_pupils['y'] = np.ma.masked_where(l_y <= 0, l_y)
+            
+
+            #---------------------------------------
+
             df_R_pupils, df_L_pupils, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l = ND.Nystagmus(df_R_pupils,df_L_pupils)
 
             ND.plot_point(df_R_pupils, df_L_pupils, df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l, res_id, Result_path, progress_callback)
@@ -560,17 +581,17 @@ class ND():
             res_img_path = os.path.join(Result_path,'img')
             
             #---------------------------------------산점도영상저장
-            r_x_max = df_R_pupils["x"].max()
-            r_x_min = df_R_pupils["x"].min()
-            r_y_max = df_R_pupils["y"].max()
-            r_y_min = df_R_pupils["y"].min()
+            # r_x_max = df_R_pupils["x"].max()
+            # r_x_min = df_R_pupils["x"].min()
+            # r_y_max = df_R_pupils["y"].max()
+            # r_y_min = df_R_pupils["y"].min()
 
             if not os.path.exists(res_img_path):
                 os.makedirs(res_img_path)
 
             for i in range(len(df_R_pupils)):
-                ND.bppv_plot(r_x_max, r_x_min, r_y_max, r_y_min, df_R_pupils[:i+1], res_img_path, "Eye_R", i+1, 70, 80, progress_callback)
-
+                # ND.bppv_plot(r_x_max, r_x_min, r_y_max, r_y_min, df_R_pupils[:i+1], res_img_path, "Eye_R", i+1, 70, 80, progress_callback)
+                ND.bppv_plot(df_R_pupils[:i+1], res_img_path, "Eye_R", i+1, 75, 85, progress_callback)
             for i in range(len(df_R_pupils)):
                 img_path = os.path.join(res_img_path, f"{i+1}.png")
                 color_img = cv2.imread(img_path)
@@ -580,16 +601,18 @@ class ND():
             shutil.rmtree(os.path.join(Result_path,"img"))
 
             #---------------------------------------
-            l_x_max = df_L_pupils["x"].max()
-            l_x_min = df_L_pupils["x"].min()
-            l_y_max = df_L_pupils["y"].max()
-            l_y_min = df_L_pupils["y"].min()
+            # l_x_max = df_L_pupils["x"].max()
+            # l_x_min = df_L_pupils["x"].min()
+            # l_y_max = df_L_pupils["y"].max()
+            # l_y_min = df_L_pupils["y"].min()
 
             if not os.path.exists(res_img_path):
                 os.makedirs(res_img_path)
 
             for i in range(len(df_L_pupils)):
-                ND.bppv_plot(l_x_max, l_x_min, l_y_max, l_y_min, df_L_pupils[:i+1], res_img_path, "Eye_L", i+1, 80, 90, progress_callback)
+                #ND.bppv_plot(l_x_max, l_x_min, l_y_max, l_y_min, df_L_pupils[:i+1], res_img_path, "Eye_L", i+1, 80, 90, progress_callback)
+                ND.bppv_plot(df_L_pupils[:i+1], res_img_path, "Eye_L", i+1, 85, 95, progress_callback)
+
 
             for i in range(len(df_L_pupils)):
                 img_path = os.path.join(res_img_path, f"{i+1}.png")

@@ -337,7 +337,7 @@ QPushButton:pressed {
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color : rgb(0, 0, 0);</string>
+                  <string notr="true">background-color: rgb(0, 0, 0);</string>
                  </property>
                 </widget>
                </item>
@@ -356,7 +356,7 @@ QPushButton:pressed {
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(0, 0, 0);</string>
+                  <string notr="true"/>
                  </property>
                  <property name="text">
                   <string/>
@@ -378,7 +378,7 @@ QPushButton:pressed {
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(0, 0, 0);</string>
+                  <string notr="true"/>
                  </property>
                  <property name="text">
                   <string/>
@@ -477,7 +477,7 @@ QPushButton:pressed {
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(0, 0, 0);</string>
+                  <string notr="true"/>
                  </property>
                  <property name="text">
                   <string/>
@@ -499,7 +499,7 @@ QPushButton:pressed {
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(0, 0, 0);</string>
+                  <string notr="true"/>
                  </property>
                  <property name="text">
                   <string/>
@@ -582,7 +582,8 @@ QPushButton:pressed {
            </property>
            <property name="font">
             <font>
-             <family>D2Coding</family>
+             <family>MS Shell Dlg 2</family>
+             <pointsize>8</pointsize>
             </font>
            </property>
            <property name="styleSheet">
@@ -713,11 +714,23 @@ QPushButton:pressed {
              <height>150</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <family>엘리스 디지털배움체</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(255, 255, 255);</string>
+            <string notr="true">background-color: rgb(254, 255, 238);
+</string>
            </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
