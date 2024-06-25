@@ -355,18 +355,9 @@ class ND():
             if progress_callback:
                 progress_callback(60+i)
     
-    def bppv_plot(fps, df, path, label, i, progress_start, progress_end, progress_callback=None):
+    def bppv_plot(x_max, x_min, y_max, y_min, df, path, label, i, progress_start, progress_end, progress_callback=None):
 
-        res_path = os.path.join(path,'img')
-        img_path = os.path.join(res_path,f"{i}.png")
-        
-        if not os.path.exists(res_path):
-            os.makedirs(res_path)
-
-        x_max = df["x"].max()
-        x_min = df["x"].min()
-        y_max = df["y"].max()
-        y_min = df["y"].min()
+        img_path = os.path.join(path,f"{i}.png")
 
         fig = plt.figure()
         fig, ax = plt.subplots(figsize=(6,6),sharex=True)
@@ -384,6 +375,7 @@ class ND():
         ax.legend()
 
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0) 
+
         if progress_callback:
                 progress_percent = progress_start + int((i + 1) / len(df) * (progress_end - progress_start))
                 progress_callback(progress_percent)
@@ -391,7 +383,7 @@ class ND():
     def Nystagmus(data_r, data_l):
             a_r, x_r, a1_r, y1_r=[]            
             a_l, x_l, a1_l, y1_l=[]
-                     
+
             #Eye R
             x_avg_r = np.average(data_r['x'])
             y_avg_r = np.average(data_r['y'])
@@ -431,8 +423,8 @@ class ND():
 
             ND_y_r['y'] = y1_r
             ND_y_r['time'] = a1_r
-           
-           #Eye L
+
+            #Eye L
             x_avg_l = np.average(data_l['x'])
             y_avg_l = np.average(data_l['y'])
             
@@ -443,7 +435,7 @@ class ND():
             moving_std_y_l = data_l['y'].rolling(window=2).std()
             moving_average_x_l = moving_std_x_l.mean()
             moving_average_y_l = moving_std_y_l.mean()
-           
+            
             d_x_l = np.max(moving_std_x_l)
             n_x_l= (d_x_l)/((d_x_l)-moving_average_x_l)
             
@@ -553,49 +545,65 @@ class ND():
             df_R_pupils = ND.DB_select(tunnel, sql_R_pupils)
             df_L_pupils = ND.DB_select(tunnel, sql_L_pupils)
             
-            
-            
             t_list = ND.time_list(fps, total_frames)
             df_R_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')
-            df_L_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')           
-            df_R_pupils, df_L_pupils,_,_,_,_ = ND.Nystagmus(df_R_pupils, df_L_pupils)
-            print(df_R_pupils)
-            print(df_L_pupils)
-            print(0)
-            ND.plot_point(df_R_pupils, df_L_pupils,res_id, Result_path, progress_callback)
+            df_L_pupils['time'] = pd.to_datetime(t_list, format='%S.%f', errors='raise')   
 
-            new_size = (240,240)
+            # df_R_pupils, df_L_pupils,_,_,_,_ = ND.Nystagmus(df_R_pupils, df_L_pupils)
+
+            # ND.plot_point(df_R_pupils, df_L_pupils,res_id, Result_path, progress_callback)
+
+            new_size = (465,462)
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             r_out_res = cv2.VideoWriter(r_res_path, fourcc, fps, new_size)
             l_out_res = cv2.VideoWriter(l_res_path, fourcc, fps, new_size)
 
-            for i in range(len(df_R_pupils)):
-                ND.bppv_plot(fps, df_R_pupils, Result_path, "Eye_R", i, 70, 80, progress_callback)
+            res_img_path = os.path.join(Result_path,'img')
+            
+            #---------------------------------------
+            r_x_max = df_R_pupils["x"].max()
+            r_x_min = df_R_pupils["x"].min()
+            r_y_max = df_R_pupils["y"].max()
+            r_y_min = df_R_pupils["y"].min()
+
+            if not os.path.exists(res_img_path):
+                os.makedirs(res_img_path)
 
             for i in range(len(df_R_pupils)):
-                img_path = os.path.join(Result_path,"img", f"{i}.png")
+                ND.bppv_plot(r_x_max, r_x_min, r_y_max, r_y_min, df_R_pupils[:i+1], res_img_path, "Eye_R", i+1, 70, 80, progress_callback)
+
+            for i in range(len(df_R_pupils)):
+                img_path = os.path.join(res_img_path, f"{i+1}.png")
                 color_img = cv2.imread(img_path)
                 r_out_res.write(color_img)
 
             r_out_res.release()
             shutil.rmtree(os.path.join(Result_path,"img"))
 
-            
-            for i in range(len(df_L_pupils)):
-                ND.bppv_plot(fps, df_L_pupils, Result_path, "Eye_L", i, 80, 90, progress_callback)
+            #---------------------------------------
+
+            l_x_max = df_L_pupils["x"].max()
+            l_x_min = df_L_pupils["x"].min()
+            l_y_max = df_L_pupils["y"].max()
+            l_y_min = df_L_pupils["y"].min()
+
+            if not os.path.exists(res_img_path):
+                os.makedirs(res_img_path)
 
             for i in range(len(df_L_pupils)):
-                img_path = os.path.join(Result_path,"img", f"{i}.png")
+                ND.bppv_plot(l_x_max, l_x_min, l_y_max, l_y_min, df_L_pupils[:i+1], res_img_path, "Eye_L", i+1, 80, 90, progress_callback)
+
+            for i in range(len(df_L_pupils)):
+                img_path = os.path.join(res_img_path, f"{i+1}.png")
                 color_img = cv2.imread(img_path)
                 l_out_res.write(color_img)
+
             l_out_res.release()
             shutil.rmtree(os.path.join(Result_path,"img"))
 
-            kernel = ND.ND_kernel(df_R_pupils, df_L_pupils, progress_callback)
+            # kernel = ND.ND_kernel(df_R_pupils, df_L_pupils, progress_callback)
 
-            sql_kenel = "INSERT INTO kernellesions (videoid, kernellesion) VALUES (%s, %s);"
-            ND.DB_Insert(tunnel, sql_kenel( id_info_row["videoid"], kernel))
-
-            
+            # sql_kenel = "INSERT INTO kernellesions (videoid, kernellesion) VALUES (%s, %s);"
+            # ND.DB_Insert(tunnel, sql_kenel( id_info_row["videoid"], kernel))
 
             cv2.destroyAllWindows()

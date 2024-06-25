@@ -17,7 +17,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import resource_rc
 
 # UI파일 연결 코드
-UI_class = uic.loadUiType("SC1_re.ui")[0]
+UI_class = uic.loadUiType("ND_Main.ui")[0]
 
 
 class DatabaseThread(QThread):
