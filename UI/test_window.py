@@ -22,6 +22,7 @@ UI_Loading = uic.loadUiType("loading.ui")[0]
 class DatabaseThread(QThread):
     finished = pyqtSignal()
     error = pyqtSignal(str)
+    progress = pyqtSignal(int) 
 
     def __init__(self, list_view_items, parent=None):
         super(DatabaseThread, self).__init__(parent)
@@ -60,7 +61,8 @@ class DatabaseThread(QThread):
                 cursor = conn.cursor(pymysql.cursors.DictCursor)
                 sql = "INSERT INTO Videos (videoname, videolenght, videofps, videowidth, videoheight, videodate, videosize) VALUES (%s, %s, %s, %s, %s, %s, %s);"
 
-                for item in self.list_view_items:
+                total_items = len(self.list_view_items)
+                for index, item in enumerate(self.list_view_items):
                     filename = item['filename']
                     length = item['length']
                     fps = item['fps']
@@ -76,12 +78,19 @@ class DatabaseThread(QThread):
                     # print(filename, length, fps, width, height, date, frame)
                     cursor.execute(sql, (filename, length, fps, width, height, date, frame))
 
+                    progress_percent = int(((index + 1) / total_items) * 100 * 0.2)  # 첫 50%를 비디오 처리에 할당
+                    self.progress.emit(progress_percent)
+
                 conn.commit()
                 conn.close()
 
+                def img_slice_progress_callback(progress):
+                    img_slice_progress_percent = 20 + int(progress * 0.8)
+                    self.progress.emit(img_slice_progress_percent) 
+
                 for item in self.list_view_items:
                     path = item['path']
-                    AviSlicingImg.img_slice_save(self, path, date)
+                    AviSlicingImg.img_slice_save(self, path, date,progress_callback=img_slice_progress_callback)
 
         except Exception as e:
             self.error.emit(str(e))
@@ -334,12 +343,17 @@ class WindowClass1(QMainWindow, UI_class):
 
         # 백그라운드 작업 스레드 시작
         self.thread = DatabaseThread(list_view_items)
+        self.thread.progress.connect(self.update_progress)
         self.thread.finished.connect(self.onDatabaseSaveFinished)
         self.thread.error.connect(self.onDatabaseSaveError)
         self.thread.start()
+    
+    def update_progress(self, value):
+        self.progressBar.setValue(value)    
 
     def onDatabaseSaveFinished(self):
         self.loading.deleteLater()
+        self.progressBar.setValue(0)
         msg = QMessageBox()
         msg.move(470, 400)
         msg.setIcon(QMessageBox.Information)

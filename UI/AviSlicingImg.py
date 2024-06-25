@@ -1,6 +1,7 @@
 import cv2
 import os
 import sys
+import time
 import pickle
 import numpy as np
 np.set_printoptions(threshold=sys.maxsize)
@@ -34,9 +35,11 @@ class AviSlicingImg():
         reimg = (reimg * 255).astype(np.uint8)
         _, imthres = cv2.threshold(reimg, 0, 255, cv2.THRESH_BINARY_INV)
         contours, _ = cv2.findContours(imthres, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        # print(contours)
         _, _, select_contours = AviSlicingImg.find_largest_2d_array(contours)
-        return contours[select_contours]
+        # print(select_contours)
+        list_contour = contours[select_contours]
+        contour_re = list_contour.reshape(list_contour.shape[0],list_contour.shape[2])
+        return contour_re
     
     def find_largest_2d_array(arr):
         max_elements = -1
@@ -116,7 +119,7 @@ class AviSlicingImg():
         finally:
             conn.close()
 
-    def img_slice_save(self, path, date):
+    def img_slice_save(self, path, date, progress_callback=None):
         video = cv2.VideoCapture(path) #'' 사이에 사용할 비디오 파일의 경로 및 이름을 넣어주도록 함
 
         if not video.isOpened():
@@ -134,6 +137,9 @@ class AviSlicingImg():
             length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
             frame_r_array = []
             frame_l_array = []
+
+            if progress_callback:
+                progress_callback(20)  # 첫 번째 단계 완료 후 20% 진행
             
             for i in range(length):
                 ret, frame = video.read() 
@@ -146,13 +152,17 @@ class AviSlicingImg():
                 frame_r_array.append(AviSlicingImg.CutImage(frame_rt))
                 frame_l_array.append(AviSlicingImg.CutImage(frame_lt))
 
+                if progress_callback:
+                    progress_percent = int((i + 1) / length * 20)  # 두 번째 단계 완료 후 40% 진행
+                    progress_callback(progress_percent)
+
             img_rt_np_array = np.array(frame_r_array)
             img_lt_np_array = np.array(frame_l_array)
 
+            sql= "INSERT INTO Images (imageid, imagenparray) VALUES (%s, %s);"
+
             rt_random_indices = np.random.choice(img_rt_np_array.shape[0], 5, replace=False)
             selected_rt_arrays = img_rt_np_array[rt_random_indices]
-
-            sql= "INSERT INTO Images (imageid, imagenparray) VALUES (%s, %s);"
 
             for i, array in enumerate(selected_rt_arrays):
                 num_1 = f'{i+1:04d}'
@@ -161,6 +171,9 @@ class AviSlicingImg():
                 R_image_name = f"{v_id}_{V_name}_R_{num_1}"
 
                 AviSlicingImg.DB_Insert(tunnel, sql, (R_image_name, frame_rt_array_binary))
+                if progress_callback:
+                    progress_percent = 20 + int((i + 1) / len(selected_rt_arrays) * 20)  
+                    progress_callback(progress_percent)
             
             lt_random_indices = np.random.choice(img_lt_np_array.shape[0], 5, replace=False)
             selected_lt_arrays = img_lt_np_array[lt_random_indices]
@@ -172,13 +185,18 @@ class AviSlicingImg():
                 L_image_name = f"{v_id}_{V_name}_L_{num_1}"
 
                 AviSlicingImg.DB_Insert(tunnel, sql, (L_image_name, frame_l_array_binary))
+                if progress_callback:
+                    progress_percent = 40 + int((i + 1) / len(selected_lt_arrays) * 20)  
+                    progress_callback(progress_percent)
             
 
             img_rt_np_array_1 = np.reshape(img_rt_np_array, (len(img_rt_np_array), 240, 240, 1))
             img_lt_np_array_1 = np.reshape(img_lt_np_array, (len(img_lt_np_array), 240, 240, 1))
 
             img_R = AviSlicingImg.PredictUNet(img_rt_np_array_1)
+            print("Fin R")
             img_L = AviSlicingImg.PredictUNet(img_lt_np_array_1)
+            print("Fin L")
 
             sql= "INSERT INTO Pupils (imageid, x, y, max_distance, min_distance, slope) VALUES (%s, %s, %s, %s, %s, %s);"
 
@@ -186,6 +204,7 @@ class AviSlicingImg():
             for i in range(len(img_R)):
                 num_2 = f'{i+1:04d}'
                 R_image_name_2 = f"{v_id}_{V_name}_R_{num_2}"
+                print(num_2)
                 
                 bppv_img = img_R[i]
 
@@ -198,8 +217,10 @@ class AviSlicingImg():
                 value4 = elii[1][1]
                 value5 = elii[2]
                 AviSlicingImg.DB_Insert(tunnel, sql, (R_image_name_2, value1, value2, value3, value4, value5))
-            
-            print(2)
+                if progress_callback:
+                    progress_percent = 60 + int((i + 1) / len(img_R) * 20)  
+                    progress_callback(progress_percent)
+                time.sleep(0.001)
 
             for i in range(len(img_L)):
                 num_2 = f'{i+1:04d}'
@@ -216,7 +237,12 @@ class AviSlicingImg():
                 value3 = elii[1][0]
                 value4 = elii[1][1]
                 value5 = elii[2]
-                AviSlicingImg.DB_Insert(tunnel, sql, (L_image_name_2, value1, value2, value3, value4, value5))
+                print(i,":",value1,value2,value3,value4,value5)
+                # AviSlicingImg.DB_Insert(tunnel, sql, (L_image_name_2, value1, value2, value3, value4, value5))
+                if progress_callback:
+                    progress_percent = 80 + int((i + 1) / len(img_L) * 20)  
+                    progress_callback(progress_percent)
+                time.sleep(0.001)
         
         # np.save("frame_rt",self.img_rt_np_array)
         # np.save("frame_lt",self.img_lt_np_array) #DB 넘어가는 코드 작성되면 사라져용 확인용
