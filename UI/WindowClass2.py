@@ -23,6 +23,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
         self.move(900, 100)
         self.show()
 
+
         # 홈 버튼에 클릭 이벤트 핸들러를 추가
         self.Sc2_Home.clicked.connect(self.goToFirstWindow)
 
@@ -34,7 +35,8 @@ class WindowClass2(QDialog,QWidget, UI_class):
         # self.Sc2_ListView.setHorizontalHeaderLabels(['FileName', 'Date', 'Canal','Percent'])
         # self.Sc2_ListView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # self.Sc2_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
+        
+        
         # self.canal = "Superior canal"
         # self.percent = "92%"
 
@@ -76,6 +78,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
 
     def goToFirstWindow(self):
         self.close()  # 현재 윈도우를 닫습니다.
+        self.setDisabled(False)  #원래 창 활성화
     
     # def tabelView(self):
     #     ssh_host = '210.126.67.40'
@@ -86,7 +89,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
     #     sql_hostname = '127.0.0.1'
     #     sql_username = 'bppv'
     #     sql_password = '1234'
-    #     sql_database = 'BppvNDdb'
+    #     sql_database = 'BppvDB'
 
     #     tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
     #                             ssh_username=ssh_username, 
@@ -104,7 +107,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
     #                 port=tunnel.local_bind_port)
             
     #         cursor = conn.cursor(pymysql.cursors.DictCursor)
-    #         sql = "SELECT * FROM BppvNDdb.Videos;"
+    #         sql = "SELECT * FROM BppvDB.Videos;"
     #         cursor.execute(sql)
     #         result = cursor.fetchall()
     #         conn.close()
