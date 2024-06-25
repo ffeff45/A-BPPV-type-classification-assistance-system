@@ -11,6 +11,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette
 from WindowClass2 import WindowClass2
 from media import CMultiMedia
+from AviSlicingImg import AviSlicingImg
 
 # UI파일 연결 코드
 UI_class = uic.loadUiType("SC1.ui")[0]
@@ -35,7 +36,7 @@ class WindowClass1(QMainWindow, UI_class):
         self.Sc1_Pause.clicked.connect(self.clickPause)
         self.Sc1_Next.clicked.connect(self.clickNext)
         self.Sc1_Prev.clicked.connect(self.clickPrev)
-    
+                                                                                                                                        
         self.Sc1_ListView.itemDoubleClicked.connect(self.dbClickList)
         self.Sc1_VideoSpeed.sliderMoved.connect(self.barChanged) 
         
@@ -45,11 +46,12 @@ class WindowClass1(QMainWindow, UI_class):
         pal.setColor(QPalette.Background, Qt.black)
         self.Sc1_Video.setAutoFillBackground(True)
         self.Sc1_Video.setPalette(pal)
+        
 
 
         # QTableWidget 초기화
-        self.Sc1_ListView.setColumnCount(6)
-        self.Sc1_ListView.setHorizontalHeaderLabels(['FileName', 'Length', 'FPS','Size',"Date", "Frame"])
+        self.Sc1_ListView.setColumnCount(7)
+        self.Sc1_ListView.setHorizontalHeaderLabels(['FileName', 'Length', 'FPS','Size',"Date", "Frame","Path"])
         self.Sc1_ListView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.Sc1_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -119,6 +121,7 @@ class WindowClass1(QMainWindow, UI_class):
             self.Sc1_ListView.setItem(row, 3, QTableWidgetItem(size))
             self.Sc1_ListView.setItem(row, 4, QTableWidgetItem(date))
             self.Sc1_ListView.setItem(row, 5, QTableWidgetItem(frame_count))
+            self.Sc1_ListView.setItem(row, 6, QTableWidgetItem(self.fname[0]))
             
             # 동영상 리스트에 동영상 추가
             self.mp.addMedia(self.fname[0])
@@ -216,60 +219,71 @@ class WindowClass1(QMainWindow, UI_class):
 
     #저장버튼
     def saveToDatabase(self):
-        
-        ssh_host = '210.126.67.40'
-        ssh_port = 7785
-        ssh_username = 'qhdrmfdl1234'
-        ssh_password = 'Wndlf7785!'
 
-        sql_hostname = '127.0.0.1'
-        sql_username = 'bppv'
-        sql_password = '1234'
-        sql_database = 'BppvNDdb'
+        for row in range(self.Sc1_ListView.rowCount()):
+            path = self.Sc1_ListView.item(row, 6).text()
+            AviSlicingImg.img_slice_save(self, path)
 
-        tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
-                                ssh_username=ssh_username,
-                                ssh_password=ssh_password,
-                                remote_bind_address=('127.0.0.1', 3306))
+        self.video_name.setText("")  
+        self.mp = CMultiMedia(self, self.Sc1_Video)
+        self.Sc1_TimeText.setText('')
+        self.Sc1_ListView.setRowCount(0)  
         
-        with tunnel:
-            print("== SSH Tunnel ==")
-            conn = pymysql.connect(
-                    host=sql_hostname, 
-                    user=sql_username,
-                    password=sql_password, 
-                    charset="utf8",
-                    db=sql_database,
-                    port=tunnel.local_bind_port)
+        # ssh_host = '210.126.67.40'
+        # ssh_port = 7785
+        # ssh_username = 'qhdrmfdl1234'
+        # ssh_password = 'Wndlf7785!'
+
+        # sql_hostname = '127.0.0.1'
+        # sql_username = 'bppv'
+        # sql_password = '1234'
+        # sql_database = 'BppvNDdb'
+
+        # tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
+        #                         ssh_username=ssh_username,
+        #                         ssh_password=ssh_password,
+        #                         remote_bind_address=('127.0.0.1', 3306))
+        
+        # with tunnel:
+        #     print("== SSH Tunnel ==")
+        #     conn = pymysql.connect(
+        #             host=sql_hostname, 
+        #             user=sql_username,
+        #             password=sql_password, 
+        #             charset="utf8",
+        #             db=sql_database,
+        #             port=tunnel.local_bind_port)
             
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-            sql = "INSERT INTO Videos (videoname, videolength, videofps, videowidth, videoheight, videodate,videoframe) VALUE ( %s,%s,%s, %s, %s,%s, %s);"
+        #     cursor = conn.cursor(pymysql.cursors.DictCursor)
+        #     sql = "INSERT INTO Videos (videoname, videolength, videofps, videowidth, videoheight, videodate,videoframe) VALUE ( %s,%s,%s, %s, %s,%s, %s);"
             
-            for row in range(self.Sc1_ListView.rowCount()):
-                filename = self.Sc1_ListView.item(row, 0).text()
-                length = self.Sc1_ListView.item(row, 1).text()
-                fps = self.Sc1_ListView.item(row, 2).text()
-                size = self.Sc1_ListView.item(row, 3).text()
-                date = self.Sc1_ListView.item(row, 4).text()
-                frame = self.Sc1_ListView.item(row, 5).text()
-                # 데이터 타입 변환
+        #     for row in range(self.Sc1_ListView.rowCount()):
+        #         filename = self.Sc1_ListView.item(row, 0).text()
+        #         length = self.Sc1_ListView.item(row, 1).text()
+        #         fps = self.Sc1_ListView.item(row, 2).text()
+        #         size = self.Sc1_ListView.item(row, 3).text()
+        #         date = self.Sc1_ListView.item(row, 4).text()
+        #         frame = self.Sc1_ListView.item(row, 5).text()
+        #         # 데이터 타입 변환
                 
-                length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
-                length_seconds = datetime.timedelta(hours=length_time.hour, minutes=length_time.minute, seconds=length_time.second).total_seconds()
-                fps = float(fps)
-                width, height = map(int, size.split('x'))
-                date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-                frame = float(frame)
+        #         length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
+        #         length_seconds = datetime.timedelta(hours=length_time.hour, minutes=length_time.minute, seconds=length_time.second).total_seconds()
+        #         fps = float(fps)
+        #         width, height = map(int, size.split('x'))
+        #         date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        #         frame = float(frame)
                 
-                print(filename,length_seconds,fps,width,height,date,frame)
-                cursor.execute(sql, (filename, length_time, fps, width, height, date,frame))
+        #         print(filename,length_seconds,fps,width,height,date,frame)
+        #         cursor.execute(sql, (filename, length_time, fps, width, height, date,frame))
             
-            conn.commit()
-            self.video_name.setText("")  
-            self.mp = CMultiMedia(self, self.Sc1_Video)
-            self.Sc1_TimeText.setText('')
-            self.Sc1_ListView.setRowCount(0)  
-            conn.close()
+        #     conn.commit()
+
+
+            # self.video_name.setText("")  
+            # self.mp = CMultiMedia(self, self.Sc1_Video)
+            # self.Sc1_TimeText.setText('')
+            # self.Sc1_ListView.setRowCount(0)  
+            # conn.close()
         
         
 

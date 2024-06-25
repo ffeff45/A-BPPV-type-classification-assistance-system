@@ -15,6 +15,7 @@ class AviSlicingImg():
     def img_slice_save(self, path):
         
         video = cv2.VideoCapture(path) #'' 사이에 사용할 비디오 파일의 경로 및 이름을 넣어주도록 함
+        print("1")
         length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         
         frame_r_array = []
@@ -47,7 +48,3 @@ class AviSlicingImg():
         np.save("frame_lt",self.img_lt_np_array) #DB 넘어가는 코드 작성되면 사라져용 확인용
         
         video.release()
-
-        
-# class DB_frame_array :
-        
