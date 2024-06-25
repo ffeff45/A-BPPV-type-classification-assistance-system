@@ -12,6 +12,7 @@ import pandas as pd
 from sshtunnel import SSHTunnelForwarder
 from contextlib import contextmanager
 import datetime
+import matplotlib.dates as mdates
 
 
 
@@ -120,6 +121,25 @@ class AviSlicingImg():
         finally:
             conn.close()
 
+    # def folder(res_id):
+    #     user_p = os.getcwd()
+    #     folrder_o = f"\\Original\\{res_id}"
+    #     folder_result = f"\\Result\\{res_id}"
+
+    #     r_o_p = os.makedirs(user_p+folrder_o+'\\Eye_R')
+    #     l_o_p = os.makedirs(user_p+folrder_o+'\\Eye_L')
+    #     res_r_p = os.makedirs(user_p+folder_result+'\\Eye_R')
+    #     res_l_p = os.makedirs(user_p+folder_result+'\\Eye_L')
+    #     res_eye_t_p = os.makedirs(user_p+folder_result+'\\eyetrace')
+
+    #     r_o_path = user_p+folrder_o+'\\Eye_R'
+    #     l_o_path = user_p+folrder_o+'\\Eye_L'
+    #     r_res_path = user_p+folder_result+'\\Eye_R'
+    #     l_res_path = user_p+folder_result+'\\Eye_L'
+    #     res_eye_trace = user_p+folder_result+'\\eyetrace'
+
+    #     return r_o_path, l_o_path, r_res_path, l_res_path, res_eye_trace
+
     def img_slice_save(self, path, date, progress_callback=None):
         video = cv2.VideoCapture(path) #'' 사이에 사용할 비디오 파일의 경로 및 이름을 넣어주도록 함
 
@@ -129,11 +149,13 @@ class AviSlicingImg():
         
         V_name = os.path.basename(path)
         with AviSlicingImg.SSH() as tunnel:
-            sql_imgid = f"SELECT videoid FROM Videos WHERE videoname = '{V_name}' AND videodate = '{date}';"
-            id_df = AviSlicingImg.DB_select(tunnel, sql_imgid)
-
-            row_1 = id_df.iloc[0]
+            sql_imgid = f"SELECT videoid,videoname FROM Videos WHERE videoname = '{V_name}' AND videodate = '{date}';"
+            id_df = AviSlicingImg.DB_select(tunnel, sql_imgid)                    
+            row_1 = id_df.iloc[0]      
             v_id = str(row_1["videoid"]).zfill(4)
+            res_id = v_id +"_"+ str(row_1["videoname"])  
+
+            AviSlicingImg.folder(res_id)
 
             length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
             frame_r_array = []
@@ -159,6 +181,16 @@ class AviSlicingImg():
 
             img_rt_np_array = np.array(frame_r_array)
             img_lt_np_array = np.array(frame_l_array)
+
+            img_r_o = img_rt_np_array[0]
+            img_l_o = img_lt_np_array[0]
+
+
+            new_size = (240,240)
+            # VideoWriter 객체 생성 (코덱 설정)
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+            out_r_o = cv2.VideoWriter(r_o_path, fourcc, fps, new_size)
 
             sql= "INSERT INTO Images (imageid, imagenparray) VALUES (%s, %s);"
 
@@ -205,12 +237,15 @@ class AviSlicingImg():
             for i in range(len(img_R)):
                 num_2 = f'{i+1:04d}'
                 R_image_name_2 = f"{v_id}_{V_name}_R_{num_2}"
-                print(num_2)
                 
                 bppv_img = img_R[i]
 
                 list_contour = AviSlicingImg.preprocessing(bppv_img)
-                elii = AviSlicingImg.Ellipse(list_contour)
+                re_list_contour = np.delete(list_contour, [0,1,-2,-1] , axis = 0)
+                if len(re_list_contour) < 5:
+                    print(num_2)
+                    continue
+                elii = AviSlicingImg.Ellipse(re_list_contour)
 
                 value1 = elii[0][0]
                 value2 = elii[0][1]
@@ -226,19 +261,22 @@ class AviSlicingImg():
             for i in range(len(img_L)):
                 num_2 = f'{i+1:04d}'
                 L_image_name_2 = f"{v_id}_{V_name}_L_{num_2}"
-                print(num_2)
 
                 bppv_img = img_L[i]
 
                 list_contour = AviSlicingImg.preprocessing(bppv_img)
-                elii = AviSlicingImg.Ellipse(list_contour)
+                re_list_contour = np.delete(list_contour, [0,1,-2,-1] , axis = 0)
+                if len(re_list_contour) < 5:
+                    print(num_2)
+                    continue
+                elii = AviSlicingImg.Ellipse(re_list_contour)
 
                 value1 = elii[0][0]
                 value2 = elii[0][1]
                 value3 = elii[1][0]
                 value4 = elii[1][1]
                 value5 = elii[2]
-                print(i,":",value1,value2,value3,value4,value5)
+                print(num_2,":",value1,value2,value3,value4,value5)
                 AviSlicingImg.DB_Insert(tunnel, sql, (L_image_name_2, value1, value2, value3, value4, value5))
                 if progress_callback:
                     progress_percent = 80 + int((i + 1) / len(img_L) * 20)  
@@ -279,15 +317,18 @@ class AviSlicingImg():
             for frame in range(int(frame)):
                 duration = frame / fps if fps > 0 else 0  
                 td = datetime.timedelta(seconds=duration)
-                t_d.append(td)
+                stime = str(td.total_seconds())
+                t_d.append(stime)
             
             # print(t_d)
 
-            df_R_pupils['time'] = t_d
-            df_L_pupils['time'] = t_d
+            df_R_pupils['time'] = pd.to_datetime(t_d, format='%S.%f', errors='raise')
+            df_L_pupils['time'] = pd.to_datetime(t_d, format='%S.%f', errors='raise')
             # print(df_R_pupils)
             # print(df_L_pupils)
-            
+
+            R_pupils = df_R_pupils[[df_R_pupils.columns[0],df_R_pupils.columns[1]]].to_numpy()
+            L_pupils = df_L_pupils[[df_L_pupils.columns[0],df_L_pupils.columns[1]]].to_numpy()           
             
             user_p = "C:\\Users\\kreyu\\Desktop\\4grade\\NDT\\ND" #본인 경로로 변경
             folrder_o = f"\\Original\\{res_id}"
@@ -307,17 +348,26 @@ class AviSlicingImg():
             print(r_o_path,l_o_path,r_res_path,l_res_path)
         
 
-            # df_R_pupils.to_csv('./R_point.csv',index=False)
-            # df_L_pupils.to_csv('./L_point.csv',index=False)
+            df_R_pupils.to_csv('./R_point.csv',index=False)
+            df_L_pupils.to_csv('./L_point.csv',index=False)
+            row_1.to_csv('./row.csv',index=False)
             
             
         AviSlicingImg.plot_point(df_R_pupils,df_L_pupils,res_id)
-        # AviSlicingImg.bppv_plot(path,df_R_pupils,df_L_pupils,r_o_path,l_o_path,r_res_path,l_res_path)
+        AviSlicingImg.bppv_plot(path,R_pupils,L_pupils,r_o_path,l_o_path,r_res_path,l_res_path)
 
     def plot_point(data_r, data_l, res_id) : 
         fig = plt.figure()           
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         # print(data_r, data_l, res_id, res_p)
+        formatter = mdates.DateFormatter('%S')
+
+        ax1.xaxis.set_major_locator(mdates.SecondLocator(interval=2))
+        ax1.xaxis.set_major_formatter(formatter) 
+
+        ax2.xaxis.set_major_locator(mdates.SecondLocator(interval=2))
+        ax2.xaxis.set_major_formatter(formatter) 
+
 
         ax1.set_ylim(0,320)
         ax1.set_ylabel(ylabel = 'X_point')
@@ -326,30 +376,30 @@ class AviSlicingImg():
         
         ax2.set_ylabel(ylabel = 'Y_point')
         ax2.set_xlabel(xlabel = 'time(s)')
-        
-        ax1.plot(data_l.iloc[:,[2]], data_l.iloc[:,[0]], data = data_l,c = "g" ,label = 'Eye_L')
-        ax1.plot(data_r.iloc[:,[2]], data_r.iloc[:,[0]], data = data_r,c = "r" ,label = 'Eye_R')
 
-        ax2.plot(data_l.iloc[:,[2]], data_l.iloc[:,[1]], data = data_l,c = "g" ,label = 'Eye_L')
-        ax2.plot(data_r.iloc[:,[2]], data_r.iloc[:,[1]], data = data_r,c = "r" ,label = 'Eye_R')
-
+        ax1.plot(data_l['time'], data_l['x'] ,c = "g" ,label = 'Eye_L')
+        ax1.plot(data_r['time'], data_r['x'],c = "r" ,label = 'Eye_R')
+        ax2.plot(data_l['time'], data_l['y'],c = "g" ,label = 'Eye_L')
+        ax2.plot(data_r['time'], data_r['y'],c = "r" ,label = 'Eye_R')
         ax1.legend()
         ax2.legend()
 
         fig.savefig(f"C:\\Users\\kreyu\\Desktop\\4grade\\NDT\\ND\\Result\\{res_id}\\eyetrace\\{res_id}.png")
 
-        return plt.close()
+        return fig
         
 
     def bppv_plot(path, data_r, data_l,r_o_p,l_o_p,res_r_p,res_l_p):
-        print(path, data_r, data_l,r_o_p,l_o_p,res_r_p,res_l_p)
+        # print(path, data_r, data_l,r_o_p,l_o_p,res_r_p,res_l_p)
         video = cv2.VideoCapture(path)       
+
         if not video.isOpened():
             print("Could not open:", path)
 
         fps = video.get(cv2.CAP_PROP_FPS)
             
-        length = len(data_r)
+        length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+
         frame_o_r_array = []
         frame_o_l_array = []
         
@@ -380,16 +430,16 @@ class AviSlicingImg():
         # elli_list 대신 df len 쓰면 될 듯
         
         for i in range(len(data_r)):
-            value1 = int(data_r.iloc[:,[0]])
-            value2 = int(data_r.iloc[:,[1]])
+            value1 = int(data_r[0][0])
+            value2 = int(data_r[0][1])
             cv2.circle(img_u_r,(value1,value2), 2, 255, -1)
             out_r_res.write(img_u_r)
 
         out_r_res.release()
 
         for i in range(len(data_l)):
-            value1 = int(data_l.iloc[:,[0]])
-            value2 = int(data_l.iloc[:,[1]])
+            value1 = int(data_l[0][0])
+            value2 = int(data_l[0][1])
             cv2.circle(img_u_l,(value1,value2), 2, 255, -1)
             out_l_res.write(img_u_l)
 
