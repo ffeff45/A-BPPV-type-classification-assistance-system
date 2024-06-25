@@ -171,7 +171,7 @@ class WindowClass1(QMainWindow, UI_class):
     def clickStop(self):
         text = ' '
         self.video_name.setText(text)
-        self.Sc1_TimeText.setText('')
+        self.Sc1_TimeBin.setText('')
         self.mp.stopMedia()
 
     # 동영상 일시정지 버튼
@@ -218,7 +218,7 @@ class WindowClass1(QMainWindow, UI_class):
 
     # 재생 상태 
     def updateState(self, msg):
-        self.Sc1_StatusText.setText(msg)
+        self.Sc1_StatusBin.setText(msg)
     
     # 바 상태 업데이트
     def updateBar(self, duration):
@@ -239,7 +239,7 @@ class WindowClass1(QMainWindow, UI_class):
         idx = stime.rfind('.')
         now_duration = stime[:idx]
         stime = f'{now_duration} / {self.duration}'
-        self.Sc1_TimeText.setText(stime)
+        self.Sc1_TimeBin.setText(stime)
 
     #저장버튼
     def saveToDatabase(self):
@@ -303,7 +303,7 @@ class WindowClass1(QMainWindow, UI_class):
 
         self.video_name.setText("")  
         self.mp = CMultiMedia(self, self.Sc1_Video)
-        self.Sc1_TimeText.setText('')
+        self.Sc1_TimeBin.setText('')
         self.Sc1_ListView.setRowCount(0)  
         
         

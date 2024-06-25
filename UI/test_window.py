@@ -15,9 +15,13 @@ from media import CMultiMedia
 from AviSlicingImg import AviSlicingImg
 from PyQt5.QtCore import QThread, pyqtSignal
 
+
+
+import resource_rc
+
 # UI파일 연결 코드
-UI_class = uic.loadUiType("SC1.ui")[0]
-UI_Loading = uic.loadUiType("loading.ui")[0]
+UI_class = uic.loadUiType("SC1_re.ui")[0]
+# UI_Loading = uic.loadUiType("loading.ui")[0]
 
 class DatabaseThread(QThread):
     finished = pyqtSignal()
@@ -91,7 +95,7 @@ class DatabaseThread(QThread):
                 for item in self.list_view_items:
                     path = item['path']
                     AviSlicingImg.img_slice_save(self, path, date,progress_callback=img_slice_progress_callback)
-
+                    
         except Exception as e:
             self.error.emit(str(e))
 
@@ -99,26 +103,26 @@ class DatabaseThread(QThread):
 
 
 
-class loading(QWidget,UI_Loading):
+# class loading(QWidget,UI_Loading):
     
-    def __init__(self,parent):
-        super(loading,self).__init__(parent) 
-        self.setupUi(self) 
-        self.widget_center()
-        self.show()
+#     def __init__(self,parent):
+#         super(loading,self).__init__(parent) 
+#         self.setupUi(self) 
+#         self.widget_center()
+#         self.show()
 
-        # 동적 이미지 추가
-        self.movie = QMovie('loading.gif', QByteArray(), self)
-        self.movie.setCacheMode(QMovie.CacheAll)
-        # QLabel에 동적 이미지 삽입
-        self.label.setMovie(self.movie)
-        self.movie.start()
-        # 윈도우 해더 숨기기
-        self.setWindowFlags(Qt.FramelessWindowHint)
+#         # 동적 이미지 추가
+#         self.movie = QMovie('loading.gif', QByteArray(), self)
+#         self.movie.setCacheMode(QMovie.CacheAll)
+#         # QLabel에 동적 이미지 삽입
+#         self.label.setMovie(self.movie)
+#         self.movie.start()
+#         # 윈도우 해더 숨기기
+#         self.setWindowFlags(Qt.FramelessWindowHint)
     
-    # 위젯 정중앙 위치
-    def widget_center(self):
-        self.move(40,70)
+#     # 위젯 정중앙 위치
+#     def widget_center(self):
+#         self.move(40,70)
 
 
 
@@ -126,9 +130,10 @@ class WindowClass1(QMainWindow, UI_class):
     def __init__(self) :
         super().__init__()
         self.setupUi(self)
-        self.setFixedSize(620, 860)
-        self.move(250, 100)
-    
+        self.setWindowTitle("ND")
+        self.move(450, 250)
+        self.setWindowIcon(QIcon("ND.png"))
+
         
         # 파일 관련 버튼
         self.Sc1_Result.clicked.connect(self.showSecondWindow)
@@ -180,10 +185,15 @@ class WindowClass1(QMainWindow, UI_class):
     def showSecondWindow(self):
         self.clickPause()
         self.second_window = WindowClass2()
-        self.setDisabled(True)  # 원래 창 비활성화
+        text = ' '
+        self.video_name.setText(text)
+        self.Sc1_TimeBin.setText('')
+        self.mp.stopMedia()
+        self.Sc1_StatusBin.setText('')
+        self.hide()
         self.second_window.exec_()
         self.show()
-        self.setDisabled(False)  #원래 창 활성화
+        self.setDisabled(False)  
 
 
     # 파일 추가 버튼
@@ -251,7 +261,7 @@ class WindowClass1(QMainWindow, UI_class):
     def clickStop(self):
         text = ' '
         self.video_name.setText(text)
-        self.Sc1_TimeText.setText('')
+        self.Sc1_TimeBin.setText('')
         self.mp.stopMedia()
 
     # 동영상 일시정지 버튼
@@ -298,7 +308,7 @@ class WindowClass1(QMainWindow, UI_class):
 
     # 재생 상태 
     def updateState(self, msg):
-        self.Sc1_StatusText.setText(msg)
+        self.Sc1_StatusBin.setText(msg)
     
     # 바 상태 업데이트
     def updateBar(self, duration):
@@ -319,13 +329,17 @@ class WindowClass1(QMainWindow, UI_class):
         idx = stime.rfind('.')
         now_duration = stime[:idx]
         stime = f'{now_duration} / {self.duration}'
-        self.Sc1_TimeText.setText(stime)
+        self.Sc1_TimeBin.setText(stime)
 
     def saveToDatabase(self):
-        # 로딩 위젯 생성 및 표시
-        self.loading = loading(self)
-        self.loading.show()
-        QApplication.processEvents()  # 로딩 위젯이 표시되도록 이벤트 처리
+        #화면 멈춤
+        text = ' '
+        self.video_name.setText(text)
+        self.Sc1_TimeBin.setText('')
+        self.mp.stopMedia()
+        self.Sc1_StatusBin.setText('')
+
+        QApplication.processEvents()  # 로딩바 위젯이 표시되도록 이벤트 처리
 
         # QTableWidget의 모든 항목 가져오기
         list_view_items = []
@@ -352,10 +366,9 @@ class WindowClass1(QMainWindow, UI_class):
         self.progressBar.setValue(value)    
 
     def onDatabaseSaveFinished(self):
-        self.loading.deleteLater()
         self.progressBar.setValue(0)
         msg = QMessageBox()
-        msg.move(470, 400)
+        msg.move(900, 450)
         msg.setIcon(QMessageBox.Information)
         msg.setWindowTitle("알림")
         msg.setText("저장 완료")
@@ -365,9 +378,8 @@ class WindowClass1(QMainWindow, UI_class):
         myWindow1.show()
 
     def onDatabaseSaveError(self, error_message):
-        self.loading.deleteLater()
         msg = QMessageBox()
-        msg.move(470, 400)
+        msg.move(900, 450)
         msg.setIcon(QMessageBox.Critical)
         msg.setWindowTitle("에러")
         msg.setText("DB 저장 중 에러 발생:\n" + error_message)

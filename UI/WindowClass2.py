@@ -8,22 +8,21 @@ from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QPixmap
+import resource2_rc
 
 # UI파일 연결 코드
-UI_class = uic.loadUiType("SC2.ui")[0]
+UI_class = uic.loadUiType("SC2_re.ui")[0]
 
 class WindowClass2(QDialog, QWidget, UI_class):
     def __init__(self):
         super(WindowClass2, self).__init__()
         self.setupUi(self)
-        self.setFixedSize(1000, 1040)
-        self.move(900, 50)
-
+        # self.setFixedSize(1000, 1040)
+        self.move(450, 100)
 
         qPixmapVar = QPixmap()
-        qPixmapVar.load("C:/Users/hyejin/Desktop/산점도.png")
+        qPixmapVar.load("C:/Users/hyejin/ND/Result/0005_안진안진안진/eyetrace_0005_안진안진안진.mp4.png")
         self.Sc2_img.setPixmap(qPixmapVar)
-
 
 
         # 홈 버튼에 클릭 이벤트 핸들러를 추가
@@ -46,9 +45,11 @@ class WindowClass2(QDialog, QWidget, UI_class):
         self.mediaPlayer4.setVideoOutput(self.Sc2_DotR)
 
         # Play 버튼 클릭 이벤트 핸들러 설정
-        self.Sc2_Play.clicked.connect(self.play_videos)
+        # self.Sc2_Play.clicked.connect(self.play_videos)
 
         self.show()
+
+        self.tabelView()
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -56,10 +57,10 @@ class WindowClass2(QDialog, QWidget, UI_class):
 
 
     def play_videos(self):
-        self.play_mp4(self.mediaPlayer1, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
-        self.play_mp4(self.mediaPlayer2, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
-        self.play_mp4(self.mediaPlayer3, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
-        self.play_mp4(self.mediaPlayer4, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
+        self.play_mp4(self.mediaPlayer1, "C:/Users/hyejin/ND/Original/0005_안진안진안진/Eye_L.mp4")
+        self.play_mp4(self.mediaPlayer2, "C:/Users/hyejin/ND/Result/0005_안진안진안진/Eye_L.mp4")
+        self.play_mp4(self.mediaPlayer3, "C:/Users/hyejin/ND/Original/0005_안진안진안진/Eye_R.mp4")
+        self.play_mp4(self.mediaPlayer4, "C:/Users/hyejin/ND/Result/0005_안진안진안진/Eye_R.mp4")
 
     def play_mp4(self, player, path):
         player.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
