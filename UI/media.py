@@ -24,8 +24,8 @@ class CMultiMedia(QObject):
 
         # user signal
         self.state_signal.connect(self.parent.updateState)
-        # self.duration_signal.connect(self.parent.updateBar)
-        # self.position_signal.connect(self.parent.updatePos)
+        self.duration_signal.connect(self.parent.updateBar)
+        self.position_signal.connect(self.parent.updatePos)
 
         
     def addMedia(self, files):
@@ -33,12 +33,6 @@ class CMultiMedia(QObject):
 
         url = QUrl.fromLocalFile(files)
         self.list.addMedia(QMediaContent(url))
-        print(self.list)
-
-        # for f in files:
-        #     url = QUrl.fromLocalFile(f)
-        #     print(url)
-        #     self.list.addMedia(QMediaContent(url))
  
     def delMedia(self, index):
         self.list.removeMedia(index)
@@ -55,17 +49,20 @@ class CMultiMedia(QObject):
         self.player.pause()
  
     def forwardMedia(self, end=False):
-        if end:
-            self.list.setCurrentIndex(0)
-        else:
-            self.list.next()
+        # if end:
+        #     self.list.setCurrentIndex(0)
+        # else:
+        #     self.list.next()
+        self.list.next()
  
     def prevMedia(self, begin=False):
-        if begin:
-            cnt = self.list.mediaCount()
-            self.list.setCurrentIndex(cnt-1)
-        else:
-            self.list.previous()
+        # if begin:
+        #     cnt = self.list.mediaCount()
+        #     self.list.setCurrentIndex(cnt-1)
+        # else:
+        #     self.list.previous()
+        self.list.previous()
+
  
     def volumeMedia(self, vol):
         self.player.setVolume(vol)

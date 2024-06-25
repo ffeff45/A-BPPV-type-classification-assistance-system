@@ -213,35 +213,31 @@ class WindowClass1(QMainWindow, UI_class):
 
     #저장버튼
     def saveToDatabase(self):
-        date1 = datetime.datetime.strptime(length, '%H:%M:%S').time()
-        size01  = size.split('x')
         
 
         for row in range(self.Sc1_ListView.rowCount()):
-            filename_item = self.Sc1_ListView.item(row, 0).text()
-            length_item = self.Sc1_ListView.item(row, 1).text()
-            fps_item = self.Sc1_ListView.item(row, 2).text()
-            height_item = self.Sc1_ListView.item(row, 3).text()
-            weight_item = self.Sc1_ListView.item(row, 4).text()
-            size_item = self.Sc1_ListView.item(row, 5).text()
-            date_item = self.Sc1_ListView.item(row, 6).text()
-
-        
-            filename = filename_item.text()
-            length = int(length_item.text())
-            fps = float(fps_item.text())
+            
+            date = datetime.datetime.strptime(length, '%H:%M:%S').time()
+            filename = filename.text()
+            length = int(length.text())
+            fps = float(fps.text())
+            size01  = size.split('x')
             height,weight = int(size01[0],size01[1])
 
 
             print(type(length))
             print(type(fps))
-            print(type(height1))
-            print(type(weight1))
+            print(type(height))
+            print(type(weight))
             print(type(size01))
-            print(type(date1))
-            
+            print(type(date))
 
-
+            date = datetime.datetime.strptime(length, '%H:%M:%S').time()
+            filename = filename.text()
+            length = int(length.text())
+            fps = float(fps.text())
+            size01  = size.split('x')
+            height,weight = int(size01[0],size01[1])
 
 
 

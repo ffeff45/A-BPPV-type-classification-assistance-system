@@ -101,37 +101,37 @@ class WindowClass2(QDialog,QWidget, UI_class):
             self.Sc2_ListView.setItem(row, 3, QTableWidgetItem(self.percent))
 
 
-# #데이터 전송 코드
-#     def insert_data_to_db(self, filename, length, fps, size, date):
-#         ssh_host = '210.126.67.40'
-#         ssh_port = 7785
-#         ssh_username = 'qhdrmfdl1234'
-#         ssh_password = 'Wndlf7785!'
+#데이터 전송 코드
+    def insert_data_to_db(self, filename, length, fps, size, date):
+        ssh_host = '210.126.67.40'
+        ssh_port = 7785
+        ssh_username = 'qhdrmfdl1234'
+        ssh_password = 'Wndlf7785!'
 
-#         sql_hostname = '127.0.0.1'
-#         sql_username = 'bppv'
-#         sql_password = '1234'
-#         sql_database = 'BppvNDdb'
+        sql_hostname = '127.0.0.1'
+        sql_username = 'bppv'
+        sql_password = '1234'
+        sql_database = 'BppvNDdb'
 
-#         tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
-#                                     ssh_username=ssh_username,
-#                                     ssh_password=ssh_password,
-#                                     remote_bind_address=('127.0.0.1', 3306))
+        tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
+                                    ssh_username=ssh_username,
+                                    ssh_password=ssh_password,
+                                    remote_bind_address=('127.0.0.1', 3306))
 
-#         with tunnel:
-#             tunnel.start()
-#             print("== SSH Tunnel ==")
-#             conn = pymysql.connect(
-#                 host=sql_hostname,
-#                 user=sql_username,
-#                 password=sql_password,
-#                 charset="utf8",
-#                 db=sql_database,
-#                 port=tunnel.local_bind_port)
+        with tunnel:
+            tunnel.start()
+            print("== SSH Tunnel ==")
+            conn = pymysql.connect(
+                host=sql_hostname,
+                user=sql_username,
+                password=sql_password,
+                charset="utf8",
+                db=sql_database,
+                port=tunnel.local_bind_port)
 
-#             cursor = conn.cursor()
-#             sql = "INSERT INTO videos (filename, length, fps, size, date) VALUES (%s, %s, %s, %s, %s)"
-#             cursor.execute(sql, (filename, length, fps, size, date))
-#             conn.commit()
-#             conn.close()
-#             tunnel.stop()
+            cursor = conn.cursor()
+            sql = "INSERT INTO videos (filename, length, fps, size, date) VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, (filename, length, fps, size, date))
+            conn.commit()
+            conn.close()
+            tunnel.stop()
