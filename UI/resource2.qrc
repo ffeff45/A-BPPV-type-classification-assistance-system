@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="icon">
+    <file>icon.svg/pause.png</file>
+    <file>icon.svg/play.png</file>
+    <file>icon.svg/play.png</file>
     <file>icon.svg/home.png</file>
     <file>icon.svg/angle-double-right.svg</file>
     <file>icon.svg/free-icon-font-file-minus-10470556.svg</file>
