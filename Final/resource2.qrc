@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>icon.svg/pause.png</file>
+    <file>icon.svg/play.png</file>
+    <file>icon.svg/play.png</file>
+    <file>icon.svg/home.png</file>
+    <file>icon.svg/angle-double-right.svg</file>
+    <file>icon.svg/free-icon-font-file-minus-10470556.svg</file>
+    <file>icon.svg/free-icon-font-floppy-disk-pen-12400860.svg</file>
+    <file>icon.svg/free-icon-font-folder-open-10469635.svg</file>
+    <file>icon.svg/free-icon-font-left-10294899.svg</file>
+    <file>icon.svg/free-icon-font-right-10294902.svg</file>
+    <file>icon.svg/free-icon-font-stop-circle-10435942.svg</file>
+    <file>icon.svg/home.svg</file>
+    <file>icon.svg/pause.svg</file>
+    <file>icon.svg/play.svg</file>
+    <file>icon.svg/plus.svg</file>
+  </qresource>
+</RCC>
