@@ -1,8 +1,6 @@
 import cv2
 import os
-import sys
 import time
-import pickle
 import shutil
 import getpass
 import numpy as np
@@ -477,40 +475,49 @@ class ND():
     
     def ND_kernel(df_ND_x_r, df_ND_y_r, df_ND_x_l, df_ND_y_l ,progress_callback = None):
 
-        std_avg_x_r = df_ND_x_r['movstd_x'].mean()
-        std_avg_y_r = df_ND_y_r['movstd_y'].mean()
+        ND_std_R_X = float(df_ND_x_r['x'].std())
+        ND_std_R_Y = float(df_ND_x_r['y'].std())
+        ND_std_L_X = float(df_ND_x_l['x'].std())
+        ND_std_L_Y = float(df_ND_x_l['y'].std())
+        
+        ND_avg_R_X = float(df_ND_x_r['x'].mean())
+        ND_avg_R_Y = float(df_ND_y_r['y'].mean())    
+        ND_avg_L_X = float(df_ND_x_l['x'].mean())
+        ND_avg_L_Y = float(df_ND_y_l['y'].mean())
 
-        if std_avg_x_r > std_avg_y_r :
+        CV_R_X = ND_std_R_X/ND_avg_R_X
+        CV_R_Y = ND_std_R_Y/ND_avg_R_Y
+        CV_L_X = ND_std_L_X/ND_avg_L_X
+        CV_L_Y = ND_std_L_Y/ND_avg_L_Y
+    
+        if CV_R_X > CV_R_Y :
             res_r = '수평반고리관 [HC-BPPV]'
-            if std_avg_y_r >= (std_avg_x_r - 1):
+            if CV_R_Y >= CV_R_X:
                 res_r = '후반고리관 [PC-BPPV]'
-        elif std_avg_x_r < std_avg_y_r :
-            if std_avg_x_r >= (std_avg_y_r - 1):
-                res_r = '후반고리관 [PC-BPPV]'
-
-        std_avg_x_l = df_ND_x_l['movstd_x'].mean()
-        std_avg_y_l = df_ND_y_l['movstd_y'].mean()
-
-        if std_avg_x_l > std_avg_y_l :
+        elif CV_R_X < CV_R_Y :           
+            res_r = '후반고리관 [PC-BPPV]'
+        
+        if CV_L_X > CV_L_Y :
             res_l = '수평반고리관 [HC-BPPV]'
-            if std_avg_y_l >= (std_avg_x_l - 1):
+            if CV_L_Y >= CV_L_X:
                 res_l = '후반고리관 [PC-BPPV]'
-        elif std_avg_x_l < std_avg_y_l :
-            if std_avg_x_l >= (std_avg_y_l - 1):
-                res_l = '후반고리관 [PC-BPPV]'
+        elif CV_L_X < CV_L_Y :          
+            res_l = '후반고리관 [PC-BPPV]'
+
+        # print(CV_R_X,CV_R_Y,CV_L_X,CV_L_Y)
 
         if res_r == res_l : 
-            kernel = res_r
+            canal = res_r
         else:
-            kernel = '정밀 판독 필요'
+            canal = '정밀 판독 필요'
 
-        print(kernel)
+        print(canal)
 
         for i in range(5):
             if progress_callback:
                 progress_callback(95+i)
         
-        return kernel
+        return canal
     
 
     def System(self, path, date, progress_callback=None):

@@ -2,7 +2,6 @@ import os
 import sys
 import cv2
 import pymysql
-import pandas as pd
 from sshtunnel import SSHTunnelForwarder
 import datetime
 from PyQt5 import *
