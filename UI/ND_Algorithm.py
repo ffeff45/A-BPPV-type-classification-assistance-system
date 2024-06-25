@@ -492,14 +492,14 @@ class ND():
     
         if CV_R_X > CV_R_Y :
             res_r = '수평반고리관 [HC-BPPV]'
-            if CV_R_Y >= CV_R_X:
+            if CV_R_Y == CV_R_X:
                 res_r = '후반고리관 [PC-BPPV]'
         elif CV_R_X < CV_R_Y :           
             res_r = '후반고리관 [PC-BPPV]'
         
         if CV_L_X > CV_L_Y :
             res_l = '수평반고리관 [HC-BPPV]'
-            if CV_L_Y >= CV_L_X:
+            if CV_L_Y == CV_L_X:
                 res_l = '후반고리관 [PC-BPPV]'
         elif CV_L_X < CV_L_Y :          
             res_l = '후반고리관 [PC-BPPV]'
