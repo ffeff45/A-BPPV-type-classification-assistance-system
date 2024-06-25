@@ -78,7 +78,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
 
     def goToFirstWindow(self):
         self.close()  # 현재 윈도우를 닫습니다.
-        self.setDisabled(False)  #원래 창 활성화
+        
     
     # def tabelView(self):
     #     ssh_host = '210.126.67.40'

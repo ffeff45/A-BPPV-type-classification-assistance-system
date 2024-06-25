@@ -5,10 +5,11 @@ import pymysql
 import pandas as pd
 from sshtunnel import SSHTunnelForwarder
 import datetime
-from PyQt5 import uic  # ui 파일을 사용하기 위한 모듈
+from PyQt5 import *
+from PyQt5 import uic 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QBasicTimer
-from PyQt5.QtGui import QPalette
+from PyQt5.QtCore import * #Qt, QBasicTimer
+from PyQt5.QtGui import * #QPalette
 from WindowClass2 import WindowClass2
 from media import CMultiMedia
 from AviSlicingImg import AviSlicingImg
@@ -17,6 +18,29 @@ import time
 
 # UI파일 연결 코드
 UI_class = uic.loadUiType("SC1.ui")[0]
+UI_Loading = uic.loadUiType("loading.ui")[0]
+
+
+class loading(QWidget,UI_Loading):
+    
+    def __init__(self,parent):
+        super(loading,self).__init__(parent)    
+        self.setupUi(self) 
+        self.widget_center()
+        self.show()
+        
+        # 동적 이미지 추가
+        self.movie = QMovie('loading.gif', QByteArray(), self)
+        self.movie.setCacheMode(QMovie.CacheAll)
+        # QLabel에 동적 이미지 삽입
+        self.label.setMovie(self.movie)
+        self.movie.start()
+        # 윈도우 해더 숨기기
+        self.setWindowFlags(Qt.FramelessWindowHint)
+    
+    # 위젯 정중앙 위치
+    def widget_center(self):
+        self.move(40,70)
 
 
 class WindowClass1(QMainWindow, UI_class):
@@ -26,6 +50,7 @@ class WindowClass1(QMainWindow, UI_class):
         self.setFixedSize(620, 860)
         self.move(250, 100)
     
+        
         # 파일 관련 버튼
         self.Sc1_Result.clicked.connect(self.showSecondWindow)
         self.Sc1_Add.clicked.connect(self.pushAddClicked)
@@ -58,42 +83,6 @@ class WindowClass1(QMainWindow, UI_class):
         self.Sc1_ListView.currentCellChanged.connect(self.currentcellchanged_event)
 
 
-    #     #로딩바
-    # def loading(self):
-    #     self.pbar = QProgressBar(self)
-    #     self.pbar.setGeometry(30, 40, 200, 25)
-
-    #     self.btn = QPushButton('Start', self)
-    #     self.btn.move(40, 80)
-    #     self.btn.clicked.connect(self.doAction)
-
-    #     self.timer = QBasicTimer()
-    #     self.step = 0
-
-    #     self.setWindowTitle('QProgressBar')
-    #     self.setGeometry(300, 300, 300, 200)
-    #     self.show()
-
-    # def timerEvent(self, e):
-    #     if self.step >= 100:
-    #         self.timer.stop()
-    #         self.btn.setText('Finished')
-    #         return
-
-    #     self.step = self.step + 1
-    #     self.pbar.setValue(self.step)
-
-    # def doAction(self):
-    #     if self.timer.isActive():
-    #         self.timer.stop()
-    #         self.btn.setText('Start')
-    #     else:
-    #         self.timer.start(100, self)
-    #         self.btn.setText('Stop')
-
-
-
-
     # 선택한 셀이 바뀌면 발생하는 이벤트
     def currentcellchanged_event(self, row, col, pre_row, pre_col):
         current_data = self.Sc1_ListView.item(row, col)  # 현재 선택 셀 값
@@ -117,7 +106,6 @@ class WindowClass1(QMainWindow, UI_class):
         self.show()
         self.setDisabled(False)  #원래 창 활성화
 
-        
 
     # 파일 추가 버튼
     def pushAddClicked(self):
@@ -256,6 +244,9 @@ class WindowClass1(QMainWindow, UI_class):
 
     #저장버튼
     def saveToDatabase(self):
+        
+        self.loading = loading(self)
+
         ssh_host = '210.126.67.40'
         ssh_port = 7785
         ssh_username = 'qhdrmfdl1234'
@@ -314,7 +305,8 @@ class WindowClass1(QMainWindow, UI_class):
         self.Sc1_TimeText.setText('')
         self.Sc1_ListView.setRowCount(0)  
         
-        # 저장 완료 메시지 박스
+        
+        #저장 완료 메시지 박스
         msg = QMessageBox()
         msg.move(470,400)
         msg.setIcon(QMessageBox.Information)
@@ -322,7 +314,8 @@ class WindowClass1(QMainWindow, UI_class):
         msg.setText("저장 완료")
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
-        
+        self.loading.deleteLater()
+        myWindow1.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
