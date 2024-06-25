@@ -13,20 +13,91 @@ from PyQt5.QtGui import * #QPalette
 from WindowClass2 import WindowClass2
 from media import CMultiMedia
 from AviSlicingImg import AviSlicingImg
+from PyQt5.QtCore import QThread, pyqtSignal
 
 # UI파일 연결 코드
 UI_class = uic.loadUiType("SC1.ui")[0]
 UI_Loading = uic.loadUiType("loading.ui")[0]
 
+class DatabaseThread(QThread):
+    finished = pyqtSignal()
+    error = pyqtSignal(str)
+
+    def __init__(self, list_view_items, parent=None):
+        super(DatabaseThread, self).__init__(parent)
+        self.list_view_items = list_view_items
+
+    def run(self):
+        try:
+            ssh_host = '210.126.67.40'
+            ssh_port = 7785
+            ssh_username = 'qhdrmfdl1234'
+            ssh_password = 'Wndlf7785!'
+
+            sql_hostname = '127.0.0.1'
+            sql_username = 'bppv'
+            sql_password = '1234'
+            sql_database = 'BppvDB'
+
+            tunnel = SSHTunnelForwarder(
+                (ssh_host, ssh_port),
+                ssh_username=ssh_username,
+                ssh_password=ssh_password,
+                remote_bind_address=('127.0.0.1', 3306)
+            )
+
+            with tunnel:
+                # print("== SSH 터널 연결 ==")
+                conn = pymysql.connect(
+                    host=sql_hostname,
+                    user=sql_username,
+                    password=sql_password,
+                    charset="utf8",
+                    db=sql_database,
+                    port=tunnel.local_bind_port
+                )
+
+                cursor = conn.cursor(pymysql.cursors.DictCursor)
+                sql = "INSERT INTO Videos (videoname, videolenght, videofps, videowidth, videoheight, videodate, videosize) VALUES (%s, %s, %s, %s, %s, %s, %s);"
+
+                for item in self.list_view_items:
+                    filename = item['filename']
+                    length = item['length']
+                    fps = item['fps']
+                    size = item['size']
+                    date = item['date']
+                    frame = item['frame']
+
+                    length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
+                    fps = float(fps)
+                    width, height = map(int, size.split('x'))
+                    frame = float(frame)
+
+                    # print(filename, length, fps, width, height, date, frame)
+                    cursor.execute(sql, (filename, length, fps, width, height, date, frame))
+
+                conn.commit()
+                conn.close()
+
+                for item in self.list_view_items:
+                    path = item['path']
+                    AviSlicingImg.img_slice_save(self, path, date)
+
+        except Exception as e:
+            self.error.emit(str(e))
+
+        self.finished.emit()
+
+
 
 class loading(QWidget,UI_Loading):
     
     def __init__(self,parent):
-        super(loading,self).__init__(parent)    
+        super(loading,self).__init__(parent) 
         self.setupUi(self) 
         self.widget_center()
         self.show()
-        
+
         # 동적 이미지 추가
         self.movie = QMovie('loading.gif', QByteArray(), self)
         self.movie.setCacheMode(QMovie.CacheAll)
@@ -241,83 +312,53 @@ class WindowClass1(QMainWindow, UI_class):
         stime = f'{now_duration} / {self.duration}'
         self.Sc1_TimeText.setText(stime)
 
-    #저장버튼
     def saveToDatabase(self):
-        
+        # 로딩 위젯 생성 및 표시
         self.loading = loading(self)
-        # self.loading.show()
+        self.loading.show()
         QApplication.processEvents()  # 로딩 위젯이 표시되도록 이벤트 처리
 
-        ssh_host = '210.126.67.40'
-        ssh_port = 7785
-        ssh_username = 'qhdrmfdl1234'
-        ssh_password = 'Wndlf7785!'
-
-        sql_hostname = '127.0.0.1'
-        sql_username = 'bppv'
-        sql_password = '1234'
-        sql_database = 'BppvDB'
-
-        tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
-                                ssh_username=ssh_username,
-                                ssh_password=ssh_password,
-                                remote_bind_address=('127.0.0.1', 3306))
-        
-        with tunnel:
-            # print("== SSH Tunnel ==")
-            conn = pymysql.connect(
-                    host=sql_hostname, 
-                    user=sql_username,
-                    password=sql_password, 
-                    charset="utf8",
-                    db=sql_database,
-                    port=tunnel.local_bind_port)
-            
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-            sql = "INSERT INTO Videos (videoname, videolenght, videofps, videowidth, videoheight, videodate,videosize) VALUE ( %s,%s,%s, %s, %s,%s, %s);"
-            
-            for row in range(self.Sc1_ListView.rowCount()):
-                filename = self.Sc1_ListView.item(row, 0).text()
-                length = self.Sc1_ListView.item(row, 1).text()
-                fps = self.Sc1_ListView.item(row, 2).text()
-                size = self.Sc1_ListView.item(row, 3).text()
-                date = self.Sc1_ListView.item(row, 4).text()
-                frame = self.Sc1_ListView.item(row, 5).text()
-
-                # 데이터 타입 변환
-                length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
-                length_seconds = datetime.timedelta(hours=length_time.hour, minutes=length_time.minute, seconds=length_time.second).total_seconds()
-                fps = float(fps)
-                width, height = map(int, size.split('x'))
-                frame = float(frame)
-                
-                # print(filename,length_seconds,fps,width,height,date,frame)
-                cursor.execute(sql, (filename, length_time, fps, width, height, date,frame))
-            
-            conn.commit()
-            conn.close()
-
+        # QTableWidget의 모든 항목 가져오기
+        list_view_items = []
         for row in range(self.Sc1_ListView.rowCount()):
-            path = self.Sc1_ListView.item(row, 6).text()
-            AviSlicingImg.img_slice_save(self, path, date)
+            item = {
+                'filename': self.Sc1_ListView.item(row, 0).text(),
+                'length': self.Sc1_ListView.item(row, 1).text(),
+                'fps': self.Sc1_ListView.item(row, 2).text(),
+                'size': self.Sc1_ListView.item(row, 3).text(),
+                'date': self.Sc1_ListView.item(row, 4).text(),
+                'frame': self.Sc1_ListView.item(row, 5).text(),
+                'path': self.Sc1_ListView.item(row, 6).text()
+            }
+            list_view_items.append(item)
 
-        self.video_name.setText("")  
-        self.mp = CMultiMedia(self, self.Sc1_Video)
-        self.Sc1_TimeText.setText('')
-        self.Sc1_ListView.setRowCount(0)  
-        
-        
-        #저장 완료 메시지 박스
+        # 백그라운드 작업 스레드 시작
+        self.thread = DatabaseThread(list_view_items)
+        self.thread.finished.connect(self.onDatabaseSaveFinished)
+        self.thread.error.connect(self.onDatabaseSaveError)
+        self.thread.start()
+
+    def onDatabaseSaveFinished(self):
+        self.loading.deleteLater()
         msg = QMessageBox()
-        msg.move(470,400)
+        msg.move(470, 400)
         msg.setIcon(QMessageBox.Information)
         msg.setWindowTitle("알림")
         msg.setText("저장 완료")
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
-
-        self.loading.deleteLater()
+        self.Sc1_ListView.setRowCount(0)
         myWindow1.show()
+
+    def onDatabaseSaveError(self, error_message):
+        self.loading.deleteLater()
+        msg = QMessageBox()
+        msg.move(470, 400)
+        msg.setIcon(QMessageBox.Critical)
+        msg.setWindowTitle("에러")
+        msg.setText("DB 저장 중 에러 발생:\n" + error_message)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
