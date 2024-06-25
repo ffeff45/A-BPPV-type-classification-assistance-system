@@ -23,14 +23,12 @@ class WindowClass1(QMainWindow, UI_class):
         self.setFixedSize(620, 860)
         self.move(250, 100)
     
-
-
         # 파일 관련 버튼
         self.Sc1_Result.clicked.connect(self.showSecondWindow)
         self.Sc1_Add.clicked.connect(self.pushAddClicked)
         self.Sc1_Del.clicked.connect(self.pushDeldClicked)
         self.Sc1_Save.clicked.connect(self.saveToDatabase)
-
+        
         # 재생 관련 버튼
         self.Sc1_Play.clicked.connect(self.clickPlay)
         self.Sc1_Stop.clicked.connect(self.clickStop)
@@ -50,8 +48,8 @@ class WindowClass1(QMainWindow, UI_class):
 
 
         # QTableWidget 초기화
-        self.Sc1_ListView.setColumnCount(5)
-        self.Sc1_ListView.setHorizontalHeaderLabels(['FileName', 'Length', 'FPS','Size',"Date"])
+        self.Sc1_ListView.setColumnCount(6)
+        self.Sc1_ListView.setHorizontalHeaderLabels(['FileName', 'Length', 'FPS','Size',"Date", "Frame"])
         self.Sc1_ListView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.Sc1_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -59,17 +57,20 @@ class WindowClass1(QMainWindow, UI_class):
 
         self.Sc1_ListView.currentCellChanged.connect(self.currentcellchanged_event)
 
+
     # 선택한 셀이 바뀌면 발생하는 이벤트
     def currentcellchanged_event(self, row, col, pre_row, pre_col):
-        current_data = self.Sc1_ListView.item(row, col) # 현재 선택 셀 값
-        pre_data = self.Sc1_ListView.item(pre_row, pre_col) # 이전 선택 셀 값
+        current_data = self.Sc1_ListView.item(row, col)  # 현재 선택 셀 값
+        pre_data = self.Sc1_ListView.item(pre_row, pre_col)  # 이전 선택 셀 값
         if pre_data is not None:
             print("이전 선택 셀 값 : ", pre_data.text())
         else:
             print("이전 선택 셀 값 : 없음")
 
-        print("현재 선택 셀 값 : ", current_data.text())
-
+        if current_data is not None:
+            print("현재 선택 셀 값 : ", current_data.text())
+        else:
+            print("현재 선택 셀 값 : 없음")
 
 
     # 페이지 바꾸는 코드
@@ -90,13 +91,12 @@ class WindowClass1(QMainWindow, UI_class):
 
             cap = cv2.VideoCapture(self.fname[0])
 
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
             fps = cap.get(cv2.CAP_PROP_FPS)
-
             # 영상 길이 계산
             duration = frame_count / fps if fps > 0 else 0  
-            duration = int(duration * 1000)
-            td = datetime.timedelta(milliseconds=duration)
+            # duration = int(duration * 1000)
+            td = datetime.timedelta(seconds=duration)
             stime = str(td)
             idx = stime.rfind('.')
             duration = stime[:idx]
@@ -106,6 +106,7 @@ class WindowClass1(QMainWindow, UI_class):
             size = f'{int(width)}x{int(height)}'
 
             date = (datetime.date.today().isoformat())
+            frame_count = str(frame_count)
 
             # 리스트에 새로운 항목 추가
             self.Sc1_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -117,19 +118,20 @@ class WindowClass1(QMainWindow, UI_class):
             self.Sc1_ListView.setItem(row, 2, QTableWidgetItem(f'{fps:.2f}'))
             self.Sc1_ListView.setItem(row, 3, QTableWidgetItem(size))
             self.Sc1_ListView.setItem(row, 4, QTableWidgetItem(date))
+            self.Sc1_ListView.setItem(row, 5, QTableWidgetItem(frame_count))
             
             # 동영상 리스트에 동영상 추가
             self.mp.addMedia(self.fname[0])
 
-    # 파일 삭제 버튼
-    def pushDeldClicked(self):
-        text = ' '
-        self.video_name.setText(text)        
-        row = self.Sc1_ListView.currentRow()
-        self.Sc1_ListView.removeRow(row)
-        self.mp.delMedia(row)
 
-    # 동영상 재생 버튼 수정필요
+    def pushDeldClicked(self):
+        current_row = self.Sc1_ListView.currentRow()
+        if current_row >= 0:  # 선택된 항목이 있는 경우
+            self.Sc1_ListView.removeRow(current_row)
+            self.mp.delMedia(current_row)
+
+
+        # 동영상 재생 버튼 
     def clickPlay(self):
         current_index = self.Sc1_ListView.currentRow()
         if current_index == -1:  # 선택된 항목이 없는 경우
@@ -142,6 +144,7 @@ class WindowClass1(QMainWindow, UI_class):
     def clickStop(self):
         text = ' '
         self.video_name.setText(text)
+        self.Sc1_TimeText.setText('')
         self.mp.stopMedia()
 
     # 동영상 일시정지 버튼
@@ -214,75 +217,70 @@ class WindowClass1(QMainWindow, UI_class):
     #저장버튼
     def saveToDatabase(self):
         
+        ssh_host = '210.126.67.40'
+        ssh_port = 7785
+        ssh_username = 'qhdrmfdl1234'
+        ssh_password = 'Wndlf7785!'
 
-        for row in range(self.Sc1_ListView.rowCount()):
-            
-            date = datetime.datetime.strptime(length, '%H:%M:%S').time()
-            filename = filename.text()
-            length = int(length.text())
-            fps = float(fps.text())
-            size01  = size.split('x')
-            height,weight = int(size01[0],size01[1])
+        sql_hostname = '127.0.0.1'
+        sql_username = 'bppv'
+        sql_password = '1234'
+        sql_database = 'BppvNDdb'
 
-
-            print(type(length))
-            print(type(fps))
-            print(type(height))
-            print(type(weight))
-            print(type(size01))
-            print(type(date))
-
-            date = datetime.datetime.strptime(length, '%H:%M:%S').time()
-            filename = filename.text()
-            length = int(length.text())
-            fps = float(fps.text())
-            size01  = size.split('x')
-            height,weight = int(size01[0],size01[1])
-
-
-
-        # ssh_host = '210.126.67.40'
-        # ssh_port = 7785
-        # ssh_username = 'qhdrmfdl1234'
-        # ssh_password = 'Wndlf7785!'
-
-        # sql_hostname = '127.0.0.1'
-        # sql_username = 'bppv'
-        # sql_password = '1234'
-        # sql_database = 'BppvNDdb'
-
-        # tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
-        #                         ssh_username=ssh_username,
-        #                         ssh_password=ssh_password,
-        #                         remote_bind_address=('127.0.0.1', 3306))
+        tunnel = SSHTunnelForwarder((ssh_host, ssh_port),
+                                ssh_username=ssh_username,
+                                ssh_password=ssh_password,
+                                remote_bind_address=('127.0.0.1', 3306))
         
-        # with tunnel:
-        #     print("== SSH Tunnel ==")
-        #     conn = pymysql.connect(
-        #             host=sql_hostname, 
-        #             user=sql_username,
-        #             password=sql_password, 
-        #             charset="utf8",
-        #             db=sql_database,
-        #             port=tunnel.local_bind_port)
+        with tunnel:
+            print("== SSH Tunnel ==")
+            conn = pymysql.connect(
+                    host=sql_hostname, 
+                    user=sql_username,
+                    password=sql_password, 
+                    charset="utf8",
+                    db=sql_database,
+                    port=tunnel.local_bind_port)
             
-        #     cursor = conn.cursor(pymysql.cursors.DictCursor)
-        #     sql = "INSERT INTO Videos (videoid, videoleght, videofps, videosize, videodate) VALUE ( %s, %s, %s,%s, %s);"
-        #     cursor.execute(sql)
-
-        #     for row in range(self.Sc1_ListView.rowCount()):
-        #                 filename = self.Sc1_ListView.item(row, 0).text()
-        #                 length = self.Sc1_ListView.item(row, 1).text()
-        #                 fps = self.Sc1_ListView.item(row, 2).text()
-        #                 size = self.Sc1_ListView.item(row, 3).text()
-        #                 date = self.Sc1_ListView.item(row, 4).text()
-        #                 result = cursor.fetchall()
-
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            sql = "INSERT INTO Videos (videoname, videolength, videofps, videowidth, videoheight, videodate,videoframe) VALUE ( %s,%s,%s, %s, %s,%s, %s);"
             
-        #     conn.commit()
-        #     conn.close()
+            for row in range(self.Sc1_ListView.rowCount()):
+                filename = self.Sc1_ListView.item(row, 0).text()
+                length = self.Sc1_ListView.item(row, 1).text()
+                fps = self.Sc1_ListView.item(row, 2).text()
+                size = self.Sc1_ListView.item(row, 3).text()
+                date = self.Sc1_ListView.item(row, 4).text()
+                frame = self.Sc1_ListView.item(row, 5).text()
+                # 데이터 타입 변환
+                
+                length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
+                length_seconds = datetime.timedelta(hours=length_time.hour, minutes=length_time.minute, seconds=length_time.second).total_seconds()
+                fps = float(fps)
+                width, height = map(int, size.split('x'))
+                date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+                frame = float(frame)
+                
+                print(filename,length_seconds,fps,width,height,date,frame)
+                cursor.execute(sql, (filename, length_time, fps, width, height, date,frame))
+            
+            conn.commit()
+            self.video_name.setText("")  
+            self.mp = CMultiMedia(self, self.Sc1_Video)
+            self.Sc1_TimeText.setText('')
+            self.Sc1_ListView.setRowCount(0)  
+            conn.close()
         
-        self.Sc1_ListView.setRowCount(0)
+        
+
+        # 저장 완료 메시지 박스
+        msg = QMessageBox()
+        msg.move(470,400)
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("알림")
+        msg.setText("저장 완료")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
 
 
 if __name__ == "__main__":
