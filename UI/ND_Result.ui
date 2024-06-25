@@ -700,11 +700,11 @@ QPushButton:pressed {
           </widget>
          </item>
          <item>
-          <widget class="QTableWidget" name="Sc2_ResultView">
+          <widget class="QLabel" name="Sc2_ResultView">
            <property name="minimumSize">
             <size>
              <width>400</width>
-             <height>0</height>
+             <height>150</height>
             </size>
            </property>
            <property name="maximumSize">
@@ -713,19 +713,8 @@ QPushButton:pressed {
              <height>150</height>
             </size>
            </property>
-           <property name="font">
-            <font>
-             <family>D2Coding</family>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(255, 255, 255);</string>
-           </property>
-           <property name="selectionMode">
-            <enum>QAbstractItemView::NoSelection</enum>
-           </property>
-           <property name="selectionBehavior">
-            <enum>QAbstractItemView::SelectItems</enum>
+           <property name="text">
+            <string/>
            </property>
           </widget>
          </item>
