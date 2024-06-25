@@ -70,12 +70,12 @@ class DatabaseThread(QThread):
                     date = item['date']
                     frame = item['frame']
 
-                    length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
+                    # length_time = datetime.datetime.strptime(length, '%H:%M:%S').time()
                     fps = float(fps)
                     width, height = map(int, size.split('x'))
                     frame = float(frame)
 
-                    # print(filename, length, fps, width, height, date, frame)
+                    
                     cursor.execute(sql, (filename, length, fps, width, height, date, frame))
 
                     progress_percent = int(((index + 1) / total_items) * 100 * 0.2)  # 첫 50%를 비디오 처리에 할당

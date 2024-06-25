@@ -5,56 +5,71 @@ from sshtunnel import SSHTunnelForwarder
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QPushButton, QLabel, QWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtGui import QMovie
+from PyQt5.QtGui import QPixmap
 
-# from media import CMultiMedia
-
-#UI파일 연결 코드
+# UI파일 연결 코드
 UI_class = uic.loadUiType("SC2.ui")[0]
 
-class WindowClass2(QDialog,QWidget, UI_class):
+class WindowClass2(QDialog, QWidget, UI_class):
     def __init__(self):
         super(WindowClass2, self).__init__()
         self.setupUi(self)
-        self.setFixedSize(620,860)
-        self.move(900, 100)
-        self.show()
+        self.setFixedSize(1000, 1040)
+        self.move(900, 50)
+
+
+        qPixmapVar = QPixmap()
+        qPixmapVar.load("C:/Users/hyejin/Desktop/산점도.png")
+        self.Sc2_img.setPixmap(qPixmapVar)
+
 
 
         # 홈 버튼에 클릭 이벤트 핸들러를 추가
         self.Sc2_Home.clicked.connect(self.goToFirstWindow)
-
-        # path1 = "C:/Users/hyejin/KakaoTalk_20240531_032447766.gif"
-        # self.play_gif(path1)
-
         self.Sc2_ListView.setColumnCount(3)
         self.Sc2_ListView.setHorizontalHeaderLabels(['FileName', 'Date', 'Canal'])
         self.Sc2_ListView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.Sc2_ListView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
-        
-        # self.canal = "Superior canal"
-        # self.percent = "92%"
 
-        # self.Sc2_ResultView.setPlainText(" ")
-        # self.Sc2_ResultView.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+        # 여러 개의 QMediaPlayer 객체 생성
+        self.mediaPlayer1 = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.mediaPlayer2 = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.mediaPlayer3 = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.mediaPlayer4 = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
-        # self.Sc2_ResultView.append(self.canal)
-        # self.Sc2_ResultView.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        # self.Sc2_ResultView.append(" ")
+        # 각 비디오 플레이어를 출력할 QVideoWidget 설정
+        self.mediaPlayer1.setVideoOutput(self.Sc2_VideoL)
+        self.mediaPlayer2.setVideoOutput(self.Sc2_VideoR)
+        self.mediaPlayer3.setVideoOutput(self.Sc2_DotL)
+        self.mediaPlayer4.setVideoOutput(self.Sc2_DotR)
 
-        # self.Sc2_ResultView.append(self.percent)
-        # self.Sc2_ResultView.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        
-        self.tabelView()
+        # Play 버튼 클릭 이벤트 핸들러 설정
+        self.Sc2_Play.clicked.connect(self.play_videos)
 
-    def play_gif(self, path):
-        movie = QMovie(path)
-        self.Sc2_Video.setMovie(movie)
-        movie.start()
+        self.show()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.play_videos()
+
+
+    def play_videos(self):
+        self.play_mp4(self.mediaPlayer1, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
+        self.play_mp4(self.mediaPlayer2, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
+        self.play_mp4(self.mediaPlayer3, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
+        self.play_mp4(self.mediaPlayer4, "C:/Users/hyejin/Desktop/안진안진안진.mp4")
+
+    def play_mp4(self, player, path):
+        player.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
+        player.play()
+        player.mediaStatusChanged.connect(lambda status: self.handle_media_status(player, path, status))
+
+    def handle_media_status(self, player, path, status):
+        if status == QMediaPlayer.EndOfMedia:
+            player.setMedia(QMediaContent(QUrl.fromLocalFile(path)))
+            player.play()
 
     def goToFirstWindow(self):
         self.close()  # 현재 윈도우를 닫습니다.
@@ -86,7 +101,7 @@ class WindowClass2(QDialog,QWidget, UI_class):
                     port=tunnel.local_bind_port)
             
             cursor = conn.cursor(pymysql.cursors.DictCursor)
-            sql = "SELECT Videos.videoname, Videos.videodate, kernellesion.kernellesion FROM Videos JOIN kernellesion ON Videos.videoid = kernellesion.videoid;"
+            sql = "SELECT Videos.videoname, Videos.videodate, kernellesions.kernellesion FROM Videos JOIN kernellesions ON Videos.videoid = kernellesions.videoid;"
             cursor.execute(sql)
             result = cursor.fetchall()
             conn.close()
@@ -97,12 +112,17 @@ class WindowClass2(QDialog,QWidget, UI_class):
         for i in range(len(df)):
             row_1 = df.iloc[i]
             filename = row_1["videoname"]
-            date =str(row_1["videodate"])
-            canal =str(row_1["kernellesion"])
+            date = str(row_1["videodate"])
+            canal = str(row_1["kernellesion"])
             print(filename)
             row = self.Sc2_ListView.rowCount()
-            self.Sc2_ListView.setRowCount(row)
-            self.Sc2_ListView.insertRow(row)
+            self.Sc2_ListView.setRowCount(row + 1)
             self.Sc2_ListView.setItem(row, 0, QTableWidgetItem(filename))
             self.Sc2_ListView.setItem(row, 1, QTableWidgetItem(date))
             self.Sc2_ListView.setItem(row, 2, QTableWidgetItem(canal))
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = WindowClass2()
+    sys.exit(app.exec_())
